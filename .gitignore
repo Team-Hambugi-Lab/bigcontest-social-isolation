@@ -25,10 +25,11 @@ secrets/
 credentials/
 
 # 데이터 (원본 데이터는 추적하지 않음)
-data/raw/
+data/raw/*
 data/interim/
 data/processed/
 !data/raw/.gitkeep
+!data/raw/README.md
 !data/interim/.gitkeep
 !data/processed/.gitkeep
 
