@@ -31,7 +31,7 @@
 ## 노트북 파일명 형식
 
 ```
-YYYYMMDD_유형_주제.ipynb
+YYMMDD_유형_주제.ipynb
 ```
 
 **유형 약어:**
@@ -47,12 +47,12 @@ YYYYMMDD_유형_주제.ipynb
 
 **예시:**
 ```
-20260629_EDA_funnel_dropoff.ipynb
-20260629_ML_churn_prediction.ipynb
-20260629_REG_ltv_estimation.ipynb
+260629_EDA_funnel_dropoff.ipynb
+260629_ML_churn_prediction.ipynb
+260629_REG_ltv_estimation.ipynb
 ```
 
-리포트 H1 제목과 1:1 대응: `20260629_EDA_funnel_dropoff.ipynb` ↔ `# [EDA] 퍼널 이탈 분석 — 2026-06-29`
+리포트 H1 제목과 1:1 대응: `260629_EDA_funnel_dropoff.ipynb` ↔ `# [EDA] 퍼널 이탈 분석 — 2026-06-29`
 
 ---
 
