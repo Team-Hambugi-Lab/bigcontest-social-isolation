@@ -54,6 +54,56 @@ wheels = [
 ]
 
 [[package]]
+name = "bigcontest-social-isolation"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "openpyxl" },
+    { name = "pandas" },
+    { name = "scikit-learn" },
+    { name = "scipy" },
+    { name = "seaborn" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "ipykernel" },
+    { name = "nbconvert" },
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+gis = [
+    { name = "folium" },
+    { name = "geopandas" },
+    { name = "shapely" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "folium", marker = "extra == 'gis'", specifier = ">=0.15" },
+    { name = "geopandas", marker = "extra == 'gis'", specifier = ">=0.14" },
+    { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.28" },
+    { name = "matplotlib", specifier = ">=3.8" },
+    { name = "nbconvert", marker = "extra == 'dev'", specifier = ">=7.14" },
+    { name = "numpy", specifier = ">=1.26" },
+    { name = "openpyxl", specifier = ">=3.1.5" },
+    { name = "pandas", specifier = ">=2.0" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.7" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.1" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.3" },
+    { name = "scikit-learn", specifier = ">=1.4" },
+    { name = "scipy", specifier = ">=1.11" },
+    { name = "seaborn", specifier = ">=0.13" },
+    { name = "shapely", marker = "extra == 'gis'", specifier = ">=2.0" },
+]
+provides-extras = ["gis", "dev"]
+
+[[package]]
 name = "bleach"
 version = "6.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -471,56 +521,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/a9/95/a3dbbb5028f35eafb
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e7/05/c19819d5e3d95294a6f5947fb9b9629efb316b96de511b418c53d245aae6/cycler-0.12.1-py3-none-any.whl", hash = "sha256:85cef7cff222d8644161529808465972e51340599459b8ac3ccbac5a854e0d30", size = 8321, upload-time = "2023-10-07T05:32:16.783Z" },
 ]
-
-[[package]]
-name = "da-template"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "matplotlib" },
-    { name = "numpy" },
-    { name = "openpyxl" },
-    { name = "pandas" },
-    { name = "scikit-learn" },
-    { name = "scipy" },
-    { name = "seaborn" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "ipykernel" },
-    { name = "nbconvert" },
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
-]
-gis = [
-    { name = "folium" },
-    { name = "geopandas" },
-    { name = "shapely" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "folium", marker = "extra == 'gis'", specifier = ">=0.15" },
-    { name = "geopandas", marker = "extra == 'gis'", specifier = ">=0.14" },
-    { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.28" },
-    { name = "matplotlib", specifier = ">=3.8" },
-    { name = "nbconvert", marker = "extra == 'dev'", specifier = ">=7.14" },
-    { name = "numpy", specifier = ">=1.26" },
-    { name = "openpyxl", specifier = ">=3.1.5" },
-    { name = "pandas", specifier = ">=2.0" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.7" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.1" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.3" },
-    { name = "scikit-learn", specifier = ">=1.4" },
-    { name = "scipy", specifier = ">=1.11" },
-    { name = "seaborn", specifier = ">=0.13" },
-    { name = "shapely", marker = "extra == 'gis'", specifier = ">=2.0" },
-]
-provides-extras = ["gis", "dev"]
 
 [[package]]
 name = "debugpy"
