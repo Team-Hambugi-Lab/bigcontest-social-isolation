@@ -1369,7 +1369,7 @@ Run: `python -c "from pathlib import Path; Path('notebooks/_smoke.ipynb').unlink
 
 **Files:**
 - Create: `scripts/nb_00_integrity.py` (노트북 생성 스크립트)
-- Create: `notebooks/260920_EDA_00_data_integrity.ipynb` (생성 결과)
+- Create: `notebooks/260920_EDA_00_data_integrity_taeeunni.ipynb` (생성 결과)
 - Create: `reports/260920_data_quality.md`
 
 **Interfaces:**
@@ -1405,7 +1405,7 @@ Run: `python -c "from pathlib import Path; Path('notebooks/_smoke.ipynb').unlink
 - [ ] **Step 2: 노트북 생성·실행**
 
 Run: `python scripts/nb_00_integrity.py`
-Expected: `notebooks/260920_EDA_00_data_integrity.ipynb` 생성, 예외 없음
+Expected: `notebooks/260920_EDA_00_data_integrity_taeeunni.ipynb` 생성, 예외 없음
 
 - [ ] **Step 3: 출력 검증**
 
@@ -1414,7 +1414,7 @@ Run:
 ```bash
 python -c "
 import nbformat
-nb = nbformat.read('notebooks/260920_EDA_00_data_integrity.ipynb', as_version=4)
+nb = nbformat.read('notebooks/260920_EDA_00_data_integrity_taeeunni.ipynb', as_version=4)
 err = [c for c in nb.cells if any(o.get('output_type')=='error' for o in c.get('outputs',[]))]
 print('cells:', len(nb.cells), 'errors:', len(err))
 assert not err
@@ -1441,7 +1441,7 @@ H1은 `# [EDA] 데이터 품질 리포트 — 2026-09-20`. 다음 내용을 포�
 
 **Files:**
 - Create: `scripts/nb_01_quality.py`
-- Create: `notebooks/260920_EDA_01_quality.ipynb`
+- Create: `notebooks/260920_EDA_01_quality_taeeunni.ipynb`
 - Create: `reports/260920_eda_01_quality.md`
 
 **Interfaces:**
@@ -1482,7 +1482,7 @@ Expected: 예외 없음
 
 - [ ] **Step 3: 출력 검증**
 
-Run: Task 9 Step 3과 동일한 검증 스크립트를 `260920_EDA_01_quality.ipynb`에 적용
+Run: Task 9 Step 3과 동일한 검증 스크립트를 `260920_EDA_01_quality_taeeunni.ipynb`에 적용
 Expected: `errors: 0`
 
 - [ ] **Step 4: 리포트 작성**
@@ -1496,7 +1496,7 @@ Expected: `errors: 0`
 
 **Files:**
 - Create: `scripts/nb_02_profiling.py`
-- Create: `notebooks/260920_EDA_02_profiling.ipynb`
+- Create: `notebooks/260920_EDA_02_profiling_taeeunni.ipynb`
 - Create: `reports/260920_eda_02_profiling.md`
 
 **Interfaces:**
@@ -1545,7 +1545,7 @@ Expected: `errors: 0`
 
 **Files:**
 - Create: `scripts/nb_03_isolation.py`
-- Create: `notebooks/260920_EDA_03_isolation_signals.ipynb`
+- Create: `notebooks/260920_EDA_03_isolation_signals_taeeunni.ipynb`
 - Create: `reports/260920_eda_03_isolation_signals.md`
 
 **Interfaces:**

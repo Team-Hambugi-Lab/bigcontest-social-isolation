@@ -286,10 +286,10 @@ src/
   visualization/style.py  한글 폰트 + colorblind 팔레트 공통 설정
 
 notebooks/
-  260920_EDA_00_data_integrity.ipynb
-  260920_EDA_01_quality.ipynb
-  260920_EDA_02_profiling.ipynb
-  260920_EDA_03_isolation_signals.ipynb
+  260920_EDA_00_data_integrity_taeeunni.ipynb
+  260920_EDA_01_quality_taeeunni.ipynb
+  260920_EDA_02_profiling_taeeunni.ipynb
+  260920_EDA_03_isolation_signals_taeeunni.ipynb
 
 reports/                  단계별 요약 (.claude/rules/04_output_format.md 형식)
 docs/plans/               본 문서와 실행 계획
@@ -317,7 +317,7 @@ docs/plans/               본 문서와 실행 계획
 
 ### 4.1 0단계 — 데이터 신뢰성
 
-`notebooks/260920_EDA_00_data_integrity.ipynb`
+`notebooks/260920_EDA_00_data_integrity_taeeunni.ipynb`
 
 | 산출 | 내용 |
 |---|---|
@@ -329,7 +329,7 @@ docs/plans/               본 문서와 실행 계획
 
 ### 4.2 1단계 — 구조·품질
 
-`notebooks/260920_EDA_01_quality.ipynb`
+`notebooks/260920_EDA_01_quality_taeeunni.ipynb`
 
 | 산출 | 내용 |
 |---|---|
@@ -351,7 +351,7 @@ docs/plans/               본 문서와 실행 계획
 
 ### 4.3 2단계 — 지역·인구 프로파일링
 
-`notebooks/260920_EDA_02_profiling.ipynb`
+`notebooks/260920_EDA_02_profiling_taeeunni.ipynb`
 
 | 산출 | 내용 |
 |---|---|
@@ -365,7 +365,7 @@ docs/plans/               본 문서와 실행 계획
 
 ### 4.4 3단계 — 고립 신호 후보
 
-`notebooks/260920_EDA_03_isolation_signals.ipynb`
+`notebooks/260920_EDA_03_isolation_signals_taeeunni.ipynb`
 
 | 축 | 트랙 | 지표 정의 | 방향 가정 |
 |---|---|---|---|

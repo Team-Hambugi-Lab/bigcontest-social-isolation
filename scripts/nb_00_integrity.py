@@ -12,6 +12,8 @@ CELLS = [
     md("""
 # [EDA] 데이터 신뢰성 점검 — 2026-09-20
 
+**작성자** — 김태은 (`taeeunni`)
+
 **목적** — 이후 모든 수치의 기반이 되는 로딩 규칙을 고정하고, 원본에서 발견된 배포 오류와
 코드 체계를 재현 가능한 형태로 입증한다.
 
@@ -306,7 +308,7 @@ PK뿐 아니라 값까지 동일한 단순 복제다. 제거하지 않으면 12�
 
 
 def main() -> None:
-    out = ROOT / "notebooks" / "260920_EDA_00_data_integrity.ipynb"
+    out = ROOT / "notebooks" / "260920_EDA_00_data_integrity_taeeunni.ipynb"
     check(build(CELLS, out))
 
 

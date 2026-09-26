@@ -12,6 +12,8 @@ CELLS = [
     md("""
 # [EDA] 고립 신호 후보 도출 — 2026-09-20
 
+**작성자** — 김태은 (`taeeunni`)
+
 > **본 지수는 방향성 외부검증 전 단계다.
 > 동별·집단별 순위를 고립 위험도로 확정 해석하지 않는다.**
 
@@ -533,7 +535,7 @@ plt.show()
 
 
 def main() -> None:
-    out = ROOT / "notebooks" / "260920_EDA_03_isolation_signals.ipynb"
+    out = ROOT / "notebooks" / "260920_EDA_03_isolation_signals_taeeunni.ipynb"
     check(build(CELLS, out))
 
 

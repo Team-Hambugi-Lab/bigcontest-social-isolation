@@ -12,7 +12,9 @@ CELLS = [
     md("""
 # [EDA] 구조·품질 분석 — 2026-09-20
 
-**선행** — `260920_EDA_00_data_integrity.ipynb`에서 로딩 규칙을 확정했다.
+**작성자** — 김태은 (`taeeunni`)
+
+**선행** — `260920_EDA_00_data_integrity_taeeunni.ipynb`에서 로딩 규칙을 확정했다.
 
 **이 노트북이 답하는 것**
 
@@ -503,7 +505,7 @@ plt.show()
 
 
 def main() -> None:
-    out = ROOT / "notebooks" / "260920_EDA_01_quality.ipynb"
+    out = ROOT / "notebooks" / "260920_EDA_01_quality_taeeunni.ipynb"
     check(build(CELLS, out))
 
 

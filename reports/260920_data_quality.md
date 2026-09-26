@@ -1,7 +1,7 @@
 # [EDA] 데이터 품질 리포트 — 2026-09-20
 
 > 대상: SK텔레콤 유동인구 CSV 18개, 신한카드 결제집계 CSV 2개 (2025-07 ~ 2025-12)
-> 근거 노트북: `notebooks/260920_EDA_00_data_integrity.ipynb`, `260920_EDA_01_quality.ipynb`
+> 근거 노트북: `notebooks/260920_EDA_00_data_integrity_taeeunni.ipynb`, `260920_EDA_01_quality_taeeunni.ipynb`
 > 설계 문서: `docs/plans/260920_EDA_design.md`
 
 이 문서는 분석 결과가 아니라 **원본 데이터의 결함과 그 대응**을 정리한 것이다.

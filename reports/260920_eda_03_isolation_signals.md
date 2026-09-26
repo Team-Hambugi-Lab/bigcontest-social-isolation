@@ -3,7 +3,7 @@
 > **본 지수는 방향성 외부검증 전 단계다.
 > 동별·집단별 순위를 고립 위험도로 확정 해석하지 않는다.**
 
-> 노트북: `notebooks/260920_EDA_03_isolation_signals.ipynb`
+> 노트북: `notebooks/260920_EDA_03_isolation_signals_taeeunni.ipynb`
 > 선행: `reports/260920_eda_02_profiling.md`
 
 ## 분석 결과

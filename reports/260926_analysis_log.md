@@ -4,7 +4,7 @@
 > 각 항목은 **왜(질문) → 무엇(결과) → 의미(판단)** 세 줄로 구성한다.
 > 수치의 원 출처는 각 항목에 노트북·셀 번호로 표시했다.
 
-**표기** — `NB0`=`260920_EDA_00_data_integrity.ipynb`, `NB1`=`..._01_quality.ipynb`,
+**표기** — `NB0`=`260920_EDA_00_data_integrity_taeeunni.ipynb`, `NB1`=`..._01_quality.ipynb`,
 `NB2`=`..._02_profiling.ipynb`, `NB3`=`..._03_isolation_signals.ipynb`
 
 ---

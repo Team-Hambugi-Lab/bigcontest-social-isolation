@@ -1,6 +1,6 @@
 # [EDA] 구조·품질 분석 — 2026-09-20
 
-> 노트북: `notebooks/260920_EDA_01_quality.ipynb`
+> 노트북: `notebooks/260920_EDA_01_quality_taeeunni.ipynb`
 > 상세 결함 목록: `reports/260920_data_quality.md`
 
 ## 분석 결과

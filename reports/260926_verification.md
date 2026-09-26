@@ -273,7 +273,7 @@ ARI 0.021은 두 분할이 사실상 무관함을 뜻하고, 연관성 척도인
 |---|---|
 | `reports/260920_eda_02_profiling.md` | 핵심발견 2번·해석·4절 — 군집이 지역 구분이라는 서술 정정 |
 | `reports/260926_analysis_log.md` | 2-3절에 안정성 검정 5종 추가, 결론 반전 명시 |
-| `scripts/nb_02_profiling.py` → `notebooks/260920_EDA_02_profiling.ipynb` | 3.1절 신설(검정 A~E, 5셀), 핵심발견 2번 교체 |
+| `scripts/nb_02_profiling.py` → `notebooks/260920_EDA_02_profiling_taeeunni.ipynb` | 3.1절 신설(검정 A~E, 5셀), 핵심발견 2번 교체 |
 | `tests/test_cluster_stability.py` | 신규 5건 — 군집 안정성과 ARI<0.10을 회귀로 고정 |
 
 ---

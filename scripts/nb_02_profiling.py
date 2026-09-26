@@ -12,6 +12,8 @@ CELLS = [
     md("""
 # [EDA] 지역·인구 프로파일링 — 2026-09-20
 
+**작성자** — 김태은 (`taeeunni`)
+
 **핵심 질문** — 강남구와 춘천시는 어떻게 다른가. 타겟 지역 결정의 근거를 만든다.
 
 **설계상 제약** — SK는 행정동 47개까지 내려가지만 신한카드는 시군구 2개뿐이다.
@@ -453,7 +455,7 @@ plt.show()
 
 
 def main() -> None:
-    out = ROOT / "notebooks" / "260920_EDA_02_profiling.ipynb"
+    out = ROOT / "notebooks" / "260920_EDA_02_profiling_taeeunni.ipynb"
     check(build(CELLS, out))
 
 
