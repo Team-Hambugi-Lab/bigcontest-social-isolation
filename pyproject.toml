@@ -55,3 +55,6 @@ indent-style = "space"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-v --tb=short"
+markers = [
+    "requires_data: 실제 원본 데이터가 필요한 테스트",
+]
