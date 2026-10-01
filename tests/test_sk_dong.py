@@ -18,6 +18,7 @@ def test_column_group_sizes():
     assert len(sk_dong.NIGHT_COLS) == 8
 
 
+@pytest.mark.requires_data
 def test_aggregate_dong_shape():
     agg = sk_dong.aggregate_dong("age")
     assert agg.index.names == ["dong_cd", "STD_YM"]
@@ -26,6 +27,7 @@ def test_aggregate_dong_shape():
     assert list(agg.columns) == sk_dong.AGE_COLS
 
 
+@pytest.mark.requires_data
 def test_all_three_tables_produce_same_47_dongs():
     dongs = {
         t: set(sk_dong.aggregate_dong(t).index.get_level_values("dong_cd"))
@@ -35,6 +37,7 @@ def test_all_three_tables_produce_same_47_dongs():
     assert len(dongs["age"]) == 47
 
 
+@pytest.mark.requires_data
 def test_space_panel_merges_without_loss(panel):
     assert len(panel) == 47 * 6
     assert panel.isnull().sum().sum() == 0
@@ -42,6 +45,7 @@ def test_space_panel_merges_without_loss(panel):
         assert c in panel.columns
 
 
+@pytest.mark.requires_data
 def test_age_total_matches_time_total_at_dong_level(panel):
     """동 단위 AGE 총량과 TIME 총량 격차를 실측 범위 안에 고정한다.
 
@@ -59,6 +63,7 @@ def test_age_total_matches_time_total_at_dong_level(panel):
     assert abs(age_sum.sum() - time_sum.sum()) / age_sum.sum() < 0.001
 
 
+@pytest.mark.requires_data
 def test_cross_table_gap_is_concentrated_in_chuncheon(panel):
     """격차가 춘천 저밀도 면 지역에 몰려 있는지 확인한다."""
     age_sum = panel[sk_dong.AGE_COLS].sum(axis=1)
@@ -71,12 +76,14 @@ def test_cross_table_gap_is_concentrated_in_chuncheon(panel):
     assert chuncheon.max() > 0.01  # 춘천 실측 최대 3.33%
 
 
+@pytest.mark.requires_data
 def test_wkdy_sum_is_about_seven_times_daily_average(panel):
     ratio = panel[sk_dong.WKDY_COLS].sum(axis=1).sum() / panel[sk_dong.AGE_COLS].sum(axis=1).sum()
     # WKDY 각 칸은 해당 요일의 일평균이므로 7칸 합은 일평균의 약 7배
     assert 6.5 < ratio < 7.5
 
 
+@pytest.mark.requires_data
 def test_unit_tong_gives_more_units():
     agg = sk_dong.aggregate_dong("age", unit="tong_cd")
     assert agg.index.get_level_values("tong_cd").nunique() == 148

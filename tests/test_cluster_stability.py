@@ -15,6 +15,7 @@ from src.data import regions
 from src.features import sk_dong
 
 SEED = 42
+pytestmark = pytest.mark.requires_data
 
 
 @pytest.fixture(scope="module")

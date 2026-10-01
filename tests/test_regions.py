@@ -1,6 +1,7 @@
 """BLOCK_CD 파싱과 좌표 변환 테스트."""
 
 import pandas as pd
+import pytest
 
 from src.data import loaders, regions
 
@@ -20,6 +21,7 @@ def test_unknown_sgg_gets_none_name():
     assert pd.isna(out.loc[0, "sgg_name"])
 
 
+@pytest.mark.requires_data
 def test_target_dong_counts_match_admin_divisions():
     df = regions.add_region_codes(loaders.load_sk("age", "202507"))
     gangnam = df[df["sgg_cd"] == "11230"]
@@ -28,6 +30,7 @@ def test_target_dong_counts_match_admin_divisions():
     assert chuncheon["dong_cd"].nunique() == 25  # 춘천시 1읍 9면 15동
 
 
+@pytest.mark.requires_data
 def test_filter_target_sgg_drops_border_grids():
     df = regions.add_region_codes(loaders.load_sk("age", "202507"))
     kept = regions.filter_target_sgg(df)
@@ -35,6 +38,7 @@ def test_filter_target_sgg_drops_border_grids():
     assert len(df) - len(kept) == 60  # 경계 격자 60행
 
 
+@pytest.mark.requires_data
 def test_add_wgs84_places_gangnam_and_chuncheon():
     df = regions.add_region_codes(loaders.load_sk("age", "202507"))
     df = regions.add_wgs84(regions.filter_target_sgg(df))
@@ -48,6 +52,7 @@ def test_add_wgs84_places_gangnam_and_chuncheon():
     assert 127.5 < cc["lon"].mean() < 127.95
 
 
+@pytest.mark.requires_data
 def test_gangnam_observed_area_near_actual():
     df = regions.add_region_codes(loaders.load_sk("age", "202507"))
     gn = df[df["sgg_cd"] == "11230"]

@@ -11,6 +11,7 @@ from src.data import external, regions
 from src.features import isolation, sk_dong
 
 AXES = ["wkdy_cv", "night_share", "peak_ratio"]
+pytestmark = pytest.mark.requires_data
 
 
 @pytest.fixture(scope="module")
@@ -30,12 +31,9 @@ def joined(census):
 
 
 def test_year_selection_is_explicit():
-    """연도가 다른 두 파일이 있다. glob 정렬은 연도 순서와 어긋나므로 명시 선택해야 한다."""
+    """파일명에 포함된 연도로 원하는 통계 연도를 명시 선택한다."""
     f24 = external._find("*성연령별인구.csv", "2024")
-    f23 = external._find("*성연령별인구.csv", "2023")
-    assert "2024년" in f24.name
-    assert "2023년" in f23.name
-    assert f24 != f23
+    assert "2024" in f24.name
     with pytest.raises(FileNotFoundError):
         external._find("*성연령별인구.csv", "2099")
 

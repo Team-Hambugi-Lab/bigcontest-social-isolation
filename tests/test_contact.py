@@ -20,6 +20,7 @@ def panel(card):
     return contact.contact_indicators(card, keys=contact.PANEL_KEYS, min_cnt=1000)
 
 
+@pytest.mark.requires_data
 def test_every_category_is_classified(card):
     """90개 업종이 모두 5개 군 중 하나에 속한다. 미분류가 있으면 예외."""
     tagged = contact.tag_tier(card)
@@ -34,6 +35,7 @@ def test_tier_definitions_do_not_overlap():
     assert len(seen) == len(set(seen)), "업종이 두 군에 중복 배정됐다"
 
 
+@pytest.mark.requires_data
 def test_stay_tier_share_is_plausible(card):
     """체류형 대면은 전체 건수의 20% 안팎이어야 한다."""
     tagged = contact.tag_tier(card)
@@ -41,6 +43,7 @@ def test_stay_tier_share_is_plausible(card):
     assert 0.15 < share < 0.30
 
 
+@pytest.mark.requires_data
 def test_indicators_are_in_range(panel):
     assert panel["contact_share"].between(0, 1).all()
     assert panel["contact_breadth"].between(0, 1).all()
@@ -48,6 +51,7 @@ def test_indicators_are_in_range(panel):
     assert (panel["contact_entropy"] <= np.log(len(contact.CONTACT_STAY)) + 1e-9).all()
 
 
+@pytest.mark.requires_data
 def test_coherence_passes_threshold(panel):
     """핵심 검정 — 세 축이 하나의 개념을 잰다. 실측 alpha 0.72."""
     res = contact.coherence(panel, contact.PREDICTIONS)
@@ -55,6 +59,7 @@ def test_coherence_passes_threshold(panel):
     assert res["min_inter_item"] > 0, "항목 간 음의 상관이 있으면 합산할 수 없다"
 
 
+@pytest.mark.requires_data
 def test_old_cohort_axes_still_fail(card):
     """기존 집단축은 여전히 실패한다. 왜 바꿨는지를 고정해 둔다."""
     from src.features import isolation
@@ -64,6 +69,7 @@ def test_old_cohort_axes_still_fail(card):
     assert res["alpha"] < 0, f"기존 축 alpha가 {res['alpha']:.3f}로 예상과 다르다"
 
 
+@pytest.mark.requires_data
 def test_medical_inclusion_breaks_coherence(card):
     """의료를 대면 접촉에 넣으면 일관성이 무너진다. 분류 결정의 근거."""
     tagged = contact.tag_tier(card)
@@ -90,6 +96,7 @@ def test_medical_inclusion_breaks_coherence(card):
     assert res["alpha"] < 0.5, "의료 포함 시 일관성이 무너져야 한다 (실측 0.18)"
 
 
+@pytest.mark.requires_data
 def test_monthly_reliability_is_high(panel):
     """월 간 순위가 유지된다. 지표가 안정적으로 무언가를 잰다는 뜻."""
     for col in ("contact_share", "contact_entropy"):
@@ -101,6 +108,7 @@ def test_monthly_reliability_is_high(panel):
         assert tri.mean() > 0.85, f"{col} 월간 신뢰도 {tri.mean():.3f}"
 
 
+@pytest.mark.requires_data
 def test_age_controlled_coherence_is_documented_as_weak(panel):
     """연령을 통제하면 일관성이 기준 미달로 떨어진다. 한계를 고정해 둔다."""
     rz = panel.copy()

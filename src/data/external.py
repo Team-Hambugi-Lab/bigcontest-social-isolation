@@ -5,14 +5,15 @@
     `data/raw/external/` 아래에 원본 그대로 둔다.
 
 구조
-    CSV에 **헤더가 없다**. 컬럼은 [기준연도, 코드(14자리), 통계항목코드, 값] 순이다.
-    코드 14자리 = 시도(2) + 시군구(3) + 읍면동(3) + 집계구(6).
-    **앞 8자리가 SK BLOCK_CD 앞 8자리와 같은 체계**라 행정동 수준에서 바로 조인된다
+    CSV 컬럼은 [기준연도, 행정구역코드, 통계항목, 통계값] 순이다.
+    행정구역코드는 시도(2자리)·시군구(5자리)·행정동(8자리)이 한 파일에 섞여 있다.
+    행정동 8자리가 SK BLOCK_CD 앞 8자리와 같은 체계라 바로 조인된다
     (47개 중 46개 직접 일치, 1개는 코드 개편 대응).
-    집계구 6자리는 SK 체계와 달라 집계구 단위 조인에는 경계 shapefile이 필요하다.
 """
 
+from fnmatch import fnmatch
 from pathlib import Path
+from unicodedata import normalize
 
 import numpy as np
 import pandas as pd
@@ -20,7 +21,10 @@ import pandas as pd
 from src.data.paths import RAW_DIR
 from src.data.regions import SGG_NAMES, TARGET_SGG
 
-EXTERNAL_DIR = RAW_DIR / "external"
+EXTERNAL_DIR = next(
+    (path for path in RAW_DIR.iterdir() if path.is_dir() and "SGIS" in path.name),
+    RAW_DIR / "external",
+)
 
 # SK에는 11230740이, SGIS에는 11230511(개포3동)이 있다. 행정동 코드 개편 시점 차이로
 # 보이며 둘 다 실재하는 동 하나에 대응한다. SGIS 쪽을 SK 코드로 맞춘다.
@@ -42,8 +46,13 @@ DEFAULT_YEAR = "2024"
 
 
 def _find(pattern: str, year: str = DEFAULT_YEAR) -> Path:
-    """NFD 한글 경로를 피해 glob으로 찾되 연도를 명시적으로 고른다."""
-    hits = sorted(EXTERNAL_DIR.rglob(pattern))
+    """NFD 한글 경로를 정규화해 비교하고 연도를 명시적으로 고른다."""
+    normalized_pattern = normalize("NFC", pattern)
+    hits = sorted(
+        path
+        for path in EXTERNAL_DIR.rglob("*")
+        if path.is_file() and fnmatch(normalize("NFC", path.name), normalized_pattern)
+    )
     if not hits:
         raise FileNotFoundError(f"{EXTERNAL_DIR} 아래에서 {pattern!r}를 찾지 못했다")
     if year is None:
@@ -52,7 +61,7 @@ def _find(pattern: str, year: str = DEFAULT_YEAR) -> Path:
                 f"{pattern!r}가 {len(hits)}개다. year를 지정할 것: {[h.name for h in hits]}"
             )
         return hits[0]
-    matched = [h for h in hits if f"_{year}년" in h.name]
+    matched = [h for h in hits if f"_{year}년" in normalize("NFC", h.name)]
     if len(matched) != 1:
         raise FileNotFoundError(
             f"{pattern!r}에서 {year}년 파일을 단일 특정하지 못했다: {[h.name for h in hits]}"
@@ -62,13 +71,9 @@ def _find(pattern: str, year: str = DEFAULT_YEAR) -> Path:
 
 def load_sgis_csv(pattern: str, year: str = DEFAULT_YEAR) -> pd.DataFrame:
     """SGIS 통계 CSV 하나를 읽어 대상 시군구만 남긴다."""
-    df = pd.read_csv(
-        _find(pattern, year),
-        header=None,
-        names=CSV_COLS,
-        dtype={"year": str, "block_cd": str, "item": str},
-    )
-    df = df[df.block_cd.str[:5].isin(TARGET_SGG)].copy()
+    df = pd.read_csv(_find(pattern, year), encoding="cp949", dtype={"행정구역코드": str})
+    df.columns = CSV_COLS
+    df = df[df.block_cd.str.len().eq(8) & df.block_cd.str[:5].isin(TARGET_SGG)].copy()
     df["value"] = pd.to_numeric(df["value"], errors="coerce")
     df["dong_cd"] = df.block_cd.str[:8].replace(DONG_CODE_FIX)
     df["sgg_cd"] = df.block_cd.str[:5]
@@ -76,12 +81,12 @@ def load_sgis_csv(pattern: str, year: str = DEFAULT_YEAR) -> pd.DataFrame:
 
 
 def dong_names() -> pd.Series:
-    """행정동 코드 -> 읍면동 이름. SGIS 행정구역 코드표에서 만든다."""
-    adm = pd.read_excel(_find("*행정구역 코드*.xls", year=None), dtype=str, skiprows=1)
-    adm.columns = ["sido_cd", "sido", "sgg_cd", "sgg", "dong_cd", "dong"]
-    adm = adm.dropna(subset=["sido_cd"])
-    key = (adm.sido_cd + adm.sgg_cd + adm.dong_cd).replace(DONG_CODE_FIX)
-    return pd.Series(adm.dong.to_numpy(), index=key.to_numpy(), name="dong_name")
+    """행정동 코드 -> 읍면동 이름. SGIS 행정동 경계 속성에서 만든다."""
+    import geopandas as gpd
+
+    adm = gpd.read_file(_find("bnd_dong_*.shp", year=None), columns=["ADM_CD", "ADM_NM"])
+    key = adm.ADM_CD.replace(DONG_CODE_FIX)
+    return pd.Series(adm.ADM_NM.to_numpy(), index=key.to_numpy(), name="dong_name")
 
 
 def census_dong_panel(year: str = DEFAULT_YEAR) -> pd.DataFrame:
@@ -111,19 +116,9 @@ def census_dong_panel(year: str = DEFAULT_YEAR) -> pd.DataFrame:
     out["aging_index"] = out.pop_old / out.pop_young.replace(0, np.nan) * 100
     out["elderly_dependency"] = out.pop_old / out.pop_work.replace(0, np.nan) * 100
 
-    # 인구밀도는 집계구별 값이라 인구 가중평균으로 올린다
+    # 현재 SGIS 파일은 행정동 값을 직접 제공한다.
     dens = load_sgis_csv("*인구총괄(인구밀도).csv", year)
-    pop = load_sgis_csv("*인구총괄(총인구).csv", year)
-    pop = pop[pop.item == "to_in_001"][["block_cd", "value"]].rename(columns={"value": "w"})
-    m = dens.merge(pop, on="block_cd")
-    out = out.join(
-        m.groupby("dong_cd")
-        .apply(
-            lambda g: np.average(g.value, weights=g.w) if g.w.sum() > 0 else np.nan,
-            include_groups=False,
-        )
-        .rename("pop_density")
-    )
+    out = out.join(dens.set_index("dong_cd")["value"].rename("pop_density"))
 
     names = dong_names()
     out["dong_name"] = [names.get(d, "?") for d in out.index]

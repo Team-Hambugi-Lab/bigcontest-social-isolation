@@ -12,13 +12,10 @@ BLOCK_CD 20자리는 구(舊) 행정구역코드 체계다.
 """
 
 import pandas as pd
-from pyproj import Transformer
 
 SGG_NAMES = {"11230": "서울 강남구", "32010": "강원 춘천시"}
 TARGET_SGG = ("11230", "32010")
 GRID_AREA_M2 = 2500  # 50m x 50m 격자
-
-_TRANSFORMER = Transformer.from_crs("EPSG:5179", "EPSG:4326", always_xy=True)
 
 
 def add_region_codes(df: pd.DataFrame) -> pd.DataFrame:
@@ -41,8 +38,11 @@ def filter_target_sgg(df: pd.DataFrame) -> pd.DataFrame:
 
 def add_wgs84(df: pd.DataFrame) -> pd.DataFrame:
     """UTM-K(EPSG:5179) 좌표를 WGS84 경위도로 변환해 붙인다."""
+    from pyproj import Transformer
+
     out = df.copy()
-    lon, lat = _TRANSFORMER.transform(out["X_COORD"].to_numpy(), out["Y_COORD"].to_numpy())
+    transformer = Transformer.from_crs("EPSG:5179", "EPSG:4326", always_xy=True)
+    lon, lat = transformer.transform(out["X_COORD"].to_numpy(), out["Y_COORD"].to_numpy())
     out["lon"] = lon
     out["lat"] = lat
     return out

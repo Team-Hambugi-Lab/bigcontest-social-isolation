@@ -4,6 +4,8 @@ import pytest
 
 from src.features import card_cohort
 
+pytestmark = pytest.mark.requires_data
+
 
 @pytest.fixture(scope="module")
 def card():

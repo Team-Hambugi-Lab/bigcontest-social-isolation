@@ -16,6 +16,7 @@ TABLE_COLS = {
     "time": sk_dong.TIME_COLS,
     "wkdy": sk_dong.WKDY_COLS,
 }
+pytestmark = pytest.mark.requires_data
 
 
 def positives(table: str, ym: str) -> np.ndarray:

@@ -66,6 +66,7 @@ def test_entropy_all_zero_is_zero():
     assert isolation._entropy(np.zeros(24)) == 0.0
 
 
+@pytest.mark.requires_data
 def test_space_indicators_columns_and_range():
     from src.features import sk_dong
 
@@ -82,6 +83,7 @@ def test_space_indicators_columns_and_range():
     assert (ind["time_entropy"] <= np.log(24) + 1e-9).all()
 
 
+@pytest.mark.requires_data
 def test_cohort_indicators_columns():
     from src.features import card_cohort
 

@@ -1,8 +1,11 @@
 """로더 테스트 — 12월 중복 제거와 타입 변환이 핵심."""
 
 import pandas as pd
+import pytest
 
 from src.data import loaders
+
+pytestmark = pytest.mark.requires_data
 
 
 def test_load_sk_age_july_shape():
