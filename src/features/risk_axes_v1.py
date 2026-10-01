@@ -35,8 +35,12 @@ WEEKEND_COLS = ["FLOW_POP_CNT_SAT", "FLOW_POP_CNT_SUN"]
 
 
 def total_flow(panel: pd.DataFrame) -> pd.Series:
-    """성·연령 12칸 합(=해당 행의 월간 총 유동인구)."""
-    return panel[AGE_COLS].sum(axis=1)
+    """성·연령 12칸 합(=해당 행의 월간 총 유동인구).
+
+    12칸이 전부 결측이면 0이 아니라 결측으로 남긴다(min_count=1) — 0으로
+    새면 이후 ln(0)=-inf가 되어 해당 집계구의 추세 전체가 깨진다.
+    """
+    return panel[AGE_COLS].sum(axis=1, min_count=1)
 
 
 def flatness_cv(panel: pd.DataFrame) -> pd.Series:
@@ -68,14 +72,18 @@ def elderly_share(panel: pd.DataFrame) -> pd.Series:
 
 
 def trend_slope(monthly_log_flow: pd.Series) -> float:
-    """월 순서(1, 2, 3…) 대비 ln(총유동인구) 회귀 기울기.
+    """월 순서 대비 ln(총유동인구) 회귀 기울기.
 
+    x값은 `monthly_log_flow`의 인덱스를 그대로 쓴다 — 호출자가 실제 월
+    순서(예: months_order 기준 0,1,2…)를 인덱스에 담아 넘겨야 한다.
+    dropna 이후 번호를 1,2,3…으로 새로 매기면 관측되지 않은 달이 있을 때
+    (예: 0,1,5월만 관측) 기울기가 실제보다 몇 배 과장된다.
     관측치가 2개 미만이면 추세를 추정할 수 없어 NaN을 반환한다.
     """
     valid = monthly_log_flow.dropna()
     if len(valid) < 2:
         return float("nan")
-    x = np.arange(1, len(valid) + 1, dtype=float)
+    x = valid.index.to_numpy(dtype=float)
     slope, _ = np.polyfit(x, valid.to_numpy(), deg=1)
     return float(slope)
 
@@ -98,7 +106,9 @@ def reduce_to_block_level(panel: pd.DataFrame, months_order: list[str]) -> pd.Da
     work = work.sort_values(["집계구", "_순서"])
 
     means = work.groupby("집계구")[["평탄도", "야간비중", "주말비", "고령비중"]].mean()
-    trends = work.groupby("집계구")["ln총유동인구"].apply(trend_slope)
+    # trend_slope는 Series의 인덱스를 x값(월 순서)으로 쓰므로, dropna 이후
+    # 재번호가 매겨지지 않도록 "_순서"를 인덱스로 옮긴 뒤 groupby.apply한다.
+    trends = work.set_index("_순서").groupby("집계구")["ln총유동인구"].apply(trend_slope)
     trends.name = "추세"
 
     return means.join(trends)
@@ -124,19 +134,24 @@ def align_risk_direction(block_level: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def cronbach_alpha_standardized(items: pd.DataFrame) -> float:
+def cronbach_alpha_standardized(items: pd.DataFrame, method: str = "pearson") -> float:
     """상관행렬 기반 표준화 Cronbach's α.
 
     항목 척도가 서로 다르면(0~1 비율 vs 로그 회귀 기울기) 원값을 그대로
     더해 분산을 비교하는 raw-score 공식은 분산이 큰 항목이 지배한다. 평균
     쌍별 상관계수 기반 공식은 척도에 영향받지 않는다.
     alpha = k * mean_r / (1 + (k - 1) * mean_r)
+
+    method: "pearson"(기본) 또는 "spearman". 주말비처럼 분포가 심하게
+    치우친 항목이 섞여 있으면 이상치에 덜 민감한 spearman도 같이 보는 게
+    좋다 — 이 데이터에서는 두 방식의 결론(0.7 미달)이 갈리지 않았지만,
+    항목 하나를 빼는 식의 재계산에서는 갈릴 수 있다.
     """
     valid = items.dropna()
     if valid.shape[1] < 2:
         raise ValueError("항목이 2개 미만이면 α를 계산할 수 없습니다.")
 
-    corr = valid.corr()
+    corr = valid.corr(method=method)
     k = corr.shape[0]
     off_diagonal = corr.to_numpy()[~np.eye(k, dtype=bool)]
     if np.isnan(off_diagonal).any():

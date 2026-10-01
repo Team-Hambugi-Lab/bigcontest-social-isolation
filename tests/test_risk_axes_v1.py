@@ -52,6 +52,16 @@ class TestTotalFlow:
         panel = pd.DataFrame([_panel_row()])
         assert total_flow(panel).iloc[0] == 12.0
 
+    def test_all_missing_age_cols_stay_nan_not_zero(self):
+        """12칸이 전부 결측이면 0이 아니라 결측이어야 한다.
+
+        0으로 새면 이후 ln(0)=-inf가 되어 해당 집계구의 추세 전체가 깨진다
+        (리뷰 Important #2).
+        """
+        row = _panel_row(**{c: float("nan") for c in AGE_COLS})
+        panel = pd.DataFrame([row])
+        assert pd.isna(total_flow(panel).iloc[0])
+
 
 class TestFlatnessCv:
     def test_perfectly_flat_profile_is_zero(self):
@@ -144,6 +154,31 @@ class TestReduceToBlockLevel:
 
         assert pd.isna(result.loc["B1", "추세"])
 
+    def test_trend_uses_actual_month_rank_not_dropna_position(self):
+        """관측월 사이에 빈 달이 있으면 dropna 이후 순번이 아니라 실제
+        월 위치(months_order 기준 순서)를 x값으로 써야 한다 (리뷰 Important #1).
+
+        202507(순서 0)·202508(순서 1)·202512(순서 5)만 관측되고 실제
+        기울기가 -0.1/월이면, 순번(0,1,2)으로 잘못 피팅하면 -0.25가 나오고
+        실제 월 위치(0,1,5)로 올바르게 피팅하면 -0.1이 나온다.
+        """
+        months_order = ["202507", "202508", "202509", "202510", "202511", "202512"]
+        true_slope = -0.1
+        observed = {"202507": 0, "202508": 1, "202512": 5}
+
+        rows = []
+        for month, rank in observed.items():
+            flow = np.exp(np.log(100.0) + true_slope * rank)
+            row = _panel_row(**{c: flow / 12 for c in AGE_COLS})
+            row["STD_YM"] = month
+            row["집계구"] = "B1"
+            rows.append(row)
+        panel = pd.DataFrame(rows)
+
+        result = reduce_to_block_level(panel, months_order=months_order)
+
+        assert result.loc["B1", "추세"] == pytest.approx(true_slope, abs=1e-6)
+
 
 class TestAlignRiskDirection:
     def test_flatness_and_trend_are_negated(self):
@@ -195,3 +230,24 @@ class TestCronbachAlphaStandardized:
 
         with pytest.raises(ValueError, match="결측"):
             cronbach_alpha_standardized(items)
+
+    def test_pearson_is_default_method(self):
+        base = np.arange(100, dtype=float)
+        items = pd.DataFrame({"a": base, "b": base * 2, "c": base + 5})
+
+        assert cronbach_alpha_standardized(items) == cronbach_alpha_standardized(
+            items, method="pearson"
+        )
+
+    def test_spearman_method_is_invariant_to_monotonic_transform(self):
+        """x와 x**3은 선형관계는 아니지만 완전한 단조관계라 순위상관은 1.0이다.
+
+        분포가 심하게 치우친 항목(예: 주말비, 최대 68)이 있을 때 Pearson은
+        이상치에 민감하지만 Spearman은 순위만 보므로 덜 흔들린다 (리뷰 Important #3).
+        """
+        x = np.arange(1, 21, dtype=float)
+        items = pd.DataFrame({"a": x, "b": x**3})
+
+        alpha_spearman = cronbach_alpha_standardized(items, method="spearman")
+
+        assert alpha_spearman == pytest.approx(1.0, abs=1e-6)
