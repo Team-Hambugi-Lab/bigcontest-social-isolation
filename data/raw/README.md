@@ -55,6 +55,34 @@ data/raw/
     └── 보건복지부_노인복지시설/
 ```
 
+## `src/data/` 코드를 쓰려면 — 로컬 폴더명 맞추기
+
+`src/data/paths.py`는 SK·신한카드 원본이 아래 폴더명·형식으로 있다고 가정합니다.
+
+```text
+data/raw/
+├── sk_telecom/
+│   └── flow_{age,time,wkdy}_pop_{202507..202512}.csv   (콤마 구분, 18개)
+└── shinhan_card/
+    └── *.csv                                            (콤마 구분, 2개 — 이름 무관, 크기로 구분)
+```
+
+대회 원본은 SK가 파이프(`|`), 신한카드가 탭 구분이라 그대로는 안 맞습니다. 콤마로 변환한
+사본을 저 이름의 폴더에 두거나(복사 또는 심볼릭 링크), 각자 변환 스크립트로 만들어 두세요.
+원본 폴더(`2026빅콘테스트_..._레이아웃/`)는 그대로 유지하고 이 폴더들은 별도로 추가합니다.
+
+예시(콤마 변환 사본이 이미 있는 경우, 심볼릭 링크로 연결):
+
+```bash
+mkdir -p data/raw/sk_telecom data/raw/shinhan_card
+ln -s "$(pwd)/<콤마 변환 SK 폴더>"/*.csv data/raw/sk_telecom/
+ln -s "$(pwd)/<콤마 변환 신한카드 폴더>"/*.csv data/raw/shinhan_card/
+```
+
+`src/data/external.py`가 쓰는 `data/raw/external/`(SGIS 집계구 14자리 코드 원본)은 아직
+팀 내에서 포맷이 통일되지 않았습니다 — `국가데이터처_SGIS` 폴더는 코드 자릿수가 섞여 있어
+그대로 연결하면 안 됩니다. 사용 전 확인이 필요합니다.
+
 ## 무결성 확인
 
 macOS와 Linux에서 다음 명령으로 공유받은 ZIP 파일이 동일한지 확인합니다.
