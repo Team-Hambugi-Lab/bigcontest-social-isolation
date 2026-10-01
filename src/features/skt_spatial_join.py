@@ -32,9 +32,7 @@ def run(skt_csv: Path, boundary_shp: Path, output_dir: Path) -> pd.DataFrame:
     )
 
     age_cols = [
-        col
-        for col in df.columns
-        if col.startswith(("MAN_FLOW_POP_CNT_", "WMAN_FLOW_POP_CNT_"))
+        col for col in df.columns if col.startswith(("MAN_FLOW_POP_CNT_", "WMAN_FLOW_POP_CNT_"))
     ]
     if len(age_cols) != 12:
         raise ValueError(f"성·연령 지표 12개가 필요하지만 {len(age_cols)}개입니다.")
@@ -69,12 +67,7 @@ def run(skt_csv: Path, boundary_shp: Path, output_dir: Path) -> pd.DataFrame:
         raise ValueError("한 지점이 둘 이상의 대상 경계에 배정됐습니다.")
 
     region = joined["SIGUNGU_NM"].fillna("경계 밖")
-    summary = (
-        region.value_counts()
-        .rename_axis("지역")
-        .rename("지점수")
-        .reset_index()
-    )
+    summary = region.value_counts().rename_axis("지역").rename("지점수").reset_index()
     summary = pd.concat(
         [pd.DataFrame({"지역": ["전체"], "지점수": [len(joined)]}), summary],
         ignore_index=True,
