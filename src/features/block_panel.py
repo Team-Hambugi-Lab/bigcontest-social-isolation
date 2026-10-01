@@ -23,7 +23,5 @@ def aggregate_to_block(df: pd.DataFrame) -> pd.DataFrame:
     filtered["집계구"] = filtered["BLOCK_CD"].str.slice(0, BLOCK_LEVEL_DIGITS)
 
     value_cols = [c for c in filtered.columns if c not in (*KEY_COLS, "집계구")]
-    grouped = filtered.groupby(["STD_YM", "집계구"], as_index=False)[value_cols].sum(
-        min_count=1
-    )
+    grouped = filtered.groupby(["STD_YM", "집계구"], as_index=False)[value_cols].sum(min_count=1)
     return grouped

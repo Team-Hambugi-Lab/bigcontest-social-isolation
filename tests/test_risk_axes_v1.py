@@ -6,6 +6,8 @@ import pandas as pd
 
 from src.features.risk_axes_v1 import (
     AGE_COLS,
+    align_risk_direction,
+    cronbach_alpha_standardized,
     elderly_share,
     flatness_cv,
     night_share,
@@ -20,15 +22,24 @@ def _panel_row(**overrides) -> dict:
     row = {f"TMST_{h:02d}": 1.0 for h in range(24)}
     row.update(
         {
-            "MAN_FLOW_POP_CNT_10G": 1.0, "MAN_FLOW_POP_CNT_20G": 1.0,
-            "MAN_FLOW_POP_CNT_30G": 1.0, "MAN_FLOW_POP_CNT_40G": 1.0,
-            "MAN_FLOW_POP_CNT_50G": 1.0, "MAN_FLOW_POP_CNT_60GU": 1.0,
-            "WMAN_FLOW_POP_CNT_10G": 1.0, "WMAN_FLOW_POP_CNT_20G": 1.0,
-            "WMAN_FLOW_POP_CNT_30G": 1.0, "WMAN_FLOW_POP_CNT_40G": 1.0,
-            "WMAN_FLOW_POP_CNT_50G": 1.0, "WMAN_FLOW_POP_CNT_60GU": 1.0,
-            "FLOW_POP_CNT_MON": 1.0, "FLOW_POP_CNT_TUS": 1.0,
-            "FLOW_POP_CNT_WED": 1.0, "FLOW_POP_CNT_THU": 1.0,
-            "FLOW_POP_CNT_FRI": 1.0, "FLOW_POP_CNT_SAT": 1.0,
+            "MAN_FLOW_POP_CNT_10G": 1.0,
+            "MAN_FLOW_POP_CNT_20G": 1.0,
+            "MAN_FLOW_POP_CNT_30G": 1.0,
+            "MAN_FLOW_POP_CNT_40G": 1.0,
+            "MAN_FLOW_POP_CNT_50G": 1.0,
+            "MAN_FLOW_POP_CNT_60GU": 1.0,
+            "WMAN_FLOW_POP_CNT_10G": 1.0,
+            "WMAN_FLOW_POP_CNT_20G": 1.0,
+            "WMAN_FLOW_POP_CNT_30G": 1.0,
+            "WMAN_FLOW_POP_CNT_40G": 1.0,
+            "WMAN_FLOW_POP_CNT_50G": 1.0,
+            "WMAN_FLOW_POP_CNT_60GU": 1.0,
+            "FLOW_POP_CNT_MON": 1.0,
+            "FLOW_POP_CNT_TUS": 1.0,
+            "FLOW_POP_CNT_WED": 1.0,
+            "FLOW_POP_CNT_THU": 1.0,
+            "FLOW_POP_CNT_FRI": 1.0,
+            "FLOW_POP_CNT_SAT": 1.0,
             "FLOW_POP_CNT_SUN": 1.0,
         }
     )
@@ -82,10 +93,16 @@ class TestElderlyShare:
         zeroed = {
             c: 0.0
             for c in [
-                "MAN_FLOW_POP_CNT_10G", "MAN_FLOW_POP_CNT_20G", "MAN_FLOW_POP_CNT_30G",
-                "MAN_FLOW_POP_CNT_40G", "MAN_FLOW_POP_CNT_50G",
-                "WMAN_FLOW_POP_CNT_10G", "WMAN_FLOW_POP_CNT_20G", "WMAN_FLOW_POP_CNT_30G",
-                "WMAN_FLOW_POP_CNT_40G", "WMAN_FLOW_POP_CNT_50G",
+                "MAN_FLOW_POP_CNT_10G",
+                "MAN_FLOW_POP_CNT_20G",
+                "MAN_FLOW_POP_CNT_30G",
+                "MAN_FLOW_POP_CNT_40G",
+                "MAN_FLOW_POP_CNT_50G",
+                "WMAN_FLOW_POP_CNT_10G",
+                "WMAN_FLOW_POP_CNT_20G",
+                "WMAN_FLOW_POP_CNT_30G",
+                "WMAN_FLOW_POP_CNT_40G",
+                "WMAN_FLOW_POP_CNT_50G",
             ]
         }
         panel = pd.DataFrame([_panel_row(**zeroed)])
@@ -107,9 +124,7 @@ class TestReduceToBlockLevel:
         rows = []
         for i, month in enumerate(["202507", "202508", "202509"]):
             scale = 120.0 / (i + 1)
-            row = _panel_row(
-                **{c: scale / 12 for c in AGE_COLS}
-            )
+            row = _panel_row(**{c: scale / 12 for c in AGE_COLS})
             row["STD_YM"] = month
             row["집계구"] = "B1"
             rows.append(row)
@@ -128,3 +143,55 @@ class TestReduceToBlockLevel:
         result = reduce_to_block_level(panel, months_order=["202507"])
 
         assert pd.isna(result.loc["B1", "추세"])
+
+
+class TestAlignRiskDirection:
+    def test_flatness_and_trend_are_negated(self):
+        block_level = pd.DataFrame(
+            {
+                "평탄도": [0.5],
+                "야간비중": [0.3],
+                "주말비": [1.2],
+                "고령비중": [0.4],
+                "추세": [-0.1],
+            },
+            index=pd.Index(["B1"], name="집계구"),
+        )
+
+        aligned = align_risk_direction(block_level)
+
+        assert aligned.loc["B1", "평탄도_위험"] == -0.5
+        assert aligned.loc["B1", "추세_위험"] == pytest.approx(0.1)
+        assert aligned.loc["B1", "야간비중_위험"] == 0.3
+        assert aligned.loc["B1", "고령비중_위험"] == 0.4
+        assert aligned.loc["B1", "주말비_위험"] == 1.2
+
+
+class TestCronbachAlphaStandardized:
+    def test_perfectly_correlated_items_give_alpha_near_one(self):
+        base = np.arange(100, dtype=float)
+        items = pd.DataFrame({"a": base, "b": base * 2, "c": base + 5})
+
+        alpha = cronbach_alpha_standardized(items)
+
+        assert alpha == pytest.approx(1.0, abs=1e-6)
+
+    def test_independent_items_give_low_alpha(self):
+        rng = np.random.default_rng(42)
+        items = pd.DataFrame(
+            {
+                "a": rng.normal(size=500),
+                "b": rng.normal(size=500),
+                "c": rng.normal(size=500),
+            }
+        )
+
+        alpha = cronbach_alpha_standardized(items)
+
+        assert alpha < 0.3
+
+    def test_raises_on_constant_column(self):
+        items = pd.DataFrame({"a": [1.0, 1.0, 1.0], "b": [1.0, 2.0, 3.0]})
+
+        with pytest.raises(ValueError, match="결측"):
+            cronbach_alpha_standardized(items)

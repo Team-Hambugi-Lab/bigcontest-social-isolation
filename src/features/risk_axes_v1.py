@@ -8,17 +8,28 @@ import numpy as np
 import pandas as pd
 
 AGE_COLS = [
-    "MAN_FLOW_POP_CNT_10G", "MAN_FLOW_POP_CNT_20G", "MAN_FLOW_POP_CNT_30G",
-    "MAN_FLOW_POP_CNT_40G", "MAN_FLOW_POP_CNT_50G", "MAN_FLOW_POP_CNT_60GU",
-    "WMAN_FLOW_POP_CNT_10G", "WMAN_FLOW_POP_CNT_20G", "WMAN_FLOW_POP_CNT_30G",
-    "WMAN_FLOW_POP_CNT_40G", "WMAN_FLOW_POP_CNT_50G", "WMAN_FLOW_POP_CNT_60GU",
+    "MAN_FLOW_POP_CNT_10G",
+    "MAN_FLOW_POP_CNT_20G",
+    "MAN_FLOW_POP_CNT_30G",
+    "MAN_FLOW_POP_CNT_40G",
+    "MAN_FLOW_POP_CNT_50G",
+    "MAN_FLOW_POP_CNT_60GU",
+    "WMAN_FLOW_POP_CNT_10G",
+    "WMAN_FLOW_POP_CNT_20G",
+    "WMAN_FLOW_POP_CNT_30G",
+    "WMAN_FLOW_POP_CNT_40G",
+    "WMAN_FLOW_POP_CNT_50G",
+    "WMAN_FLOW_POP_CNT_60GU",
 ]
 ELDERLY_COLS = ["MAN_FLOW_POP_CNT_60GU", "WMAN_FLOW_POP_CNT_60GU"]
 TIME_COLS = [f"TMST_{h:02d}" for h in range(24)]
 NIGHT_COLS = [f"TMST_{h:02d}" for h in range(0, 6)]
 WEEKDAY_COLS = [
-    "FLOW_POP_CNT_MON", "FLOW_POP_CNT_TUS", "FLOW_POP_CNT_WED",
-    "FLOW_POP_CNT_THU", "FLOW_POP_CNT_FRI",
+    "FLOW_POP_CNT_MON",
+    "FLOW_POP_CNT_TUS",
+    "FLOW_POP_CNT_WED",
+    "FLOW_POP_CNT_THU",
+    "FLOW_POP_CNT_FRI",
 ]
 WEEKEND_COLS = ["FLOW_POP_CNT_SAT", "FLOW_POP_CNT_SUN"]
 
@@ -91,3 +102,45 @@ def reduce_to_block_level(panel: pd.DataFrame, months_order: list[str]) -> pd.Da
     trends.name = "추세"
 
     return means.join(trends)
+
+
+def align_risk_direction(block_level: pd.DataFrame) -> pd.DataFrame:
+    """5개 변수를 모두 '높을수록 위험' 방향으로 정렬한다.
+
+    평탄도는 낮을수록 위험(평탄함)이므로 부호를 뒤집는다. 추세는 더 많이
+    감소할수록(기울기가 더 음수일수록) 위험이므로 부호를 뒤집는다. 야간비중·
+    고령비중은 원값 그대로가 이미 '높을수록 위험'이다. 주말비는 원 보고서에
+    구체적 변환식이 없어 원값을 그대로 쓴다 — 이 방향이 맞는지는 충돌 #3과
+    직결된 열린 질문이며, 재언 님 코드가 공유되면 반드시 대조해야 한다.
+    """
+    return pd.DataFrame(
+        {
+            "평탄도_위험": -block_level["평탄도"],
+            "야간비중_위험": block_level["야간비중"],
+            "주말비_위험": block_level["주말비"],
+            "고령비중_위험": block_level["고령비중"],
+            "추세_위험": -block_level["추세"],
+        }
+    )
+
+
+def cronbach_alpha_standardized(items: pd.DataFrame) -> float:
+    """상관행렬 기반 표준화 Cronbach's α.
+
+    항목 척도가 서로 다르면(0~1 비율 vs 로그 회귀 기울기) 원값을 그대로
+    더해 분산을 비교하는 raw-score 공식은 분산이 큰 항목이 지배한다. 평균
+    쌍별 상관계수 기반 공식은 척도에 영향받지 않는다.
+    alpha = k * mean_r / (1 + (k - 1) * mean_r)
+    """
+    valid = items.dropna()
+    if valid.shape[1] < 2:
+        raise ValueError("항목이 2개 미만이면 α를 계산할 수 없습니다.")
+
+    corr = valid.corr()
+    k = corr.shape[0]
+    off_diagonal = corr.to_numpy()[~np.eye(k, dtype=bool)]
+    if np.isnan(off_diagonal).any():
+        raise ValueError("상관계수에 결측이 있습니다 — 분산이 0인 항목을 확인하세요.")
+
+    mean_r = off_diagonal.mean()
+    return float(k * mean_r / (1 + (k - 1) * mean_r))
