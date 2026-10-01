@@ -1,13 +1,17 @@
 """위험 신호 변수 계산 단위 테스트 (1부: 월별 변수)."""
 
+import numpy as np
 import pytest
 import pandas as pd
 
 from src.features.risk_axes_v1 import (
+    AGE_COLS,
     elderly_share,
     flatness_cv,
     night_share,
+    reduce_to_block_level,
     total_flow,
+    trend_slope,
     weekend_ratio,
 )
 
@@ -86,3 +90,41 @@ class TestElderlyShare:
         }
         panel = pd.DataFrame([_panel_row(**zeroed)])
         assert elderly_share(panel).iloc[0] == pytest.approx(1.0)
+
+
+class TestTrendSlope:
+    def test_declining_series_has_negative_slope(self):
+        series = pd.Series([np.log(100.0), np.log(50.0), np.log(25.0)])
+        assert trend_slope(series) < 0
+
+    def test_single_observation_is_nan(self):
+        series = pd.Series([np.log(100.0)])
+        assert pd.isna(trend_slope(series))
+
+
+class TestReduceToBlockLevel:
+    def test_trend_is_negative_for_declining_flow(self):
+        rows = []
+        for i, month in enumerate(["202507", "202508", "202509"]):
+            scale = 120.0 / (i + 1)
+            row = _panel_row(
+                **{c: scale / 12 for c in AGE_COLS}
+            )
+            row["STD_YM"] = month
+            row["집계구"] = "B1"
+            rows.append(row)
+        panel = pd.DataFrame(rows)
+
+        result = reduce_to_block_level(panel, months_order=["202507", "202508", "202509"])
+
+        assert result.loc["B1", "추세"] < 0
+
+    def test_single_month_trend_is_nan(self):
+        row = _panel_row()
+        row["STD_YM"] = "202507"
+        row["집계구"] = "B1"
+        panel = pd.DataFrame([row])
+
+        result = reduce_to_block_level(panel, months_order=["202507"])
+
+        assert pd.isna(result.loc["B1", "추세"])

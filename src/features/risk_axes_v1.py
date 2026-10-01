@@ -54,3 +54,40 @@ def weekend_ratio(panel: pd.DataFrame) -> pd.Series:
 def elderly_share(panel: pd.DataFrame) -> pd.Series:
     """60대 이상(남+여) 유동인구가 성·연령 12칸 합에서 차지하는 비중."""
     return panel[ELDERLY_COLS].sum(axis=1) / total_flow(panel)
+
+
+def trend_slope(monthly_log_flow: pd.Series) -> float:
+    """월 순서(1, 2, 3…) 대비 ln(총유동인구) 회귀 기울기.
+
+    관측치가 2개 미만이면 추세를 추정할 수 없어 NaN을 반환한다.
+    """
+    valid = monthly_log_flow.dropna()
+    if len(valid) < 2:
+        return float("nan")
+    x = np.arange(1, len(valid) + 1, dtype=float)
+    slope, _ = np.polyfit(x, valid.to_numpy(), deg=1)
+    return float(slope)
+
+
+def reduce_to_block_level(panel: pd.DataFrame, months_order: list[str]) -> pd.DataFrame:
+    """(기준월, 집계구) 패널에 변수를 계산하고 집계구 단위로 축약한다.
+
+    평탄도·야간비중·주말비·고령비중은 6개월 평균, 추세는 월별
+    ln(총유동인구)의 회귀 기울기로 계산한다.
+    """
+    work = panel.copy()
+    work["평탄도"] = flatness_cv(work)
+    work["야간비중"] = night_share(work)
+    work["주말비"] = weekend_ratio(work)
+    work["고령비중"] = elderly_share(work)
+    work["ln총유동인구"] = np.log(total_flow(work))
+
+    month_rank = {m: i for i, m in enumerate(months_order)}
+    work["_순서"] = work["STD_YM"].map(month_rank)
+    work = work.sort_values(["집계구", "_순서"])
+
+    means = work.groupby("집계구")[["평탄도", "야간비중", "주말비", "고령비중"]].mean()
+    trends = work.groupby("집계구")["ln총유동인구"].apply(trend_slope)
+    trends.name = "추세"
+
+    return means.join(trends)
