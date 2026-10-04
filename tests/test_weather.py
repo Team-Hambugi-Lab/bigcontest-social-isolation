@@ -1,7 +1,5 @@
 """기상 월별 집계 테스트."""
 
-import pandas as pd
-
 from src.data.weather import load_monthly_temperature
 
 SEOUL_CSV = """latitude,longitude,elevation,utc_offset_seconds,timezone,timezone_abbreviation

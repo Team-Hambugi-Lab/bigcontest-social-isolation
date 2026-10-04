@@ -121,3 +121,30 @@ class TestFlowTracksTemperature:
         assert set(result.index) == {"서울", "춘천"}
         assert result.loc["서울", "correlation"] == pytest.approx(1.0)
         assert abs(result.loc["춘천", "correlation"]) < 1.0
+
+    def test_partial_missing_values_do_not_make_whole_region_nan(self):
+        """scipy.spearmanr의 기본 nan_policy='propagate'는 행 하나만 결측이어도
+        전체 상관·p-value를 NaN으로 만든다(리뷰 Important #4). 결측 달(예: 그
+        집계구의 특정 월 데이터 누락, 또는 log(0)로 생긴 결측)이 하나 있어도
+        나머지 유효한 달로는 상관을 계산할 수 있어야 하고, n도 유효한 행만
+        세야 한다.
+        """
+        flow_dev = pd.DataFrame(
+            {
+                "지역": ["서울"] * 6,
+                "STD_YM": [f"2025{m:02d}" for m in range(7, 13)],
+                "ln유동인구_편차": [5.0, 4.0, float("nan"), 1.0, -4.0, -9.0],
+            }
+        )
+        temp_dev = pd.DataFrame(
+            {
+                "지역": ["서울"] * 6,
+                "STD_YM": [f"2025{m:02d}" for m in range(7, 13)],
+                "평균기온_편차": [10.0, 9.0, 6.0, -1.0, -9.0, -17.0],
+            }
+        )
+
+        result = correlate_flow_with_temperature(flow_dev, temp_dev)
+
+        assert result.loc["서울", "n"] == 5
+        assert not pd.isna(result.loc["서울", "correlation"])

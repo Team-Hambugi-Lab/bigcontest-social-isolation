@@ -55,6 +55,9 @@ def correlate_flow_with_temperature(flow_dev: pd.DataFrame, temp_dev: pd.DataFra
     merged = flow_dev.merge(temp_dev[["지역", "STD_YM", "평균기온_편차"]], on=["지역", "STD_YM"])
     rows = []
     for region, g in merged.groupby("지역"):
+        # scipy.spearmanr의 기본 nan_policy='propagate'는 결측 하나만 있어도
+        # 전체 결과를 NaN으로 만든다 — 유효한 행만 남기고 n도 그만큼만 센다.
+        g = g.dropna(subset=["ln유동인구_편차", "평균기온_편차"])
         r, p = stats.spearmanr(g["ln유동인구_편차"], g["평균기온_편차"])
         rows.append({"지역": region, "correlation": r, "p_value": p, "n": len(g)})
     return pd.DataFrame(rows).set_index("지역")
