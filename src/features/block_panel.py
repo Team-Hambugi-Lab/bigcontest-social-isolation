@@ -8,10 +8,15 @@
 집계구경계/bnd_oa_*.shp)에 공간조인(point-in-polygon)한다.
 """
 
-from pathlib import Path
+from __future__ import annotations
 
-import geopandas as gpd
+from pathlib import Path
+from typing import TYPE_CHECKING
+
 import pandas as pd
+
+if TYPE_CHECKING:
+    import geopandas as gpd
 
 OA_SHP_PATHS = (
     "강남_집계구경계/bnd_oa_11230_2025_2Q.shp",
@@ -21,7 +26,15 @@ KEY_COLS = ["STD_YM", "BLOCK_CD", "X_COORD", "Y_COORD"]
 
 
 def load_oa_boundaries(reference_dir: Path) -> gpd.GeoDataFrame:
-    """강남·춘천 SGIS 집계구 경계를 하나로 합쳐 반환한다. 코드는 TOT_OA_CD(14자리)."""
+    """강남·춘천 SGIS 집계구 경계를 하나로 합쳐 반환한다. 코드는 TOT_OA_CD(14자리).
+
+    geopandas는 CI 기본 의존성이 아니라(GDAL 등 시스템 라이브러리 필요, `uv sync
+    --extra gis`로 별도 설치) 함수 안에서 지연 import한다 — 모듈 최상단에서 import하면
+    CI(`uv sync --extra dev`만 실행)에서 이 함수를 쓰지 않는 테스트까지 collection
+    단계에서 ModuleNotFoundError로 깨진다.
+    """
+    import geopandas as gpd
+
     parts = [gpd.read_file(reference_dir / p)[["TOT_OA_CD", "geometry"]] for p in OA_SHP_PATHS]
     return gpd.GeoDataFrame(pd.concat(parts, ignore_index=True), crs=parts[0].crs)
 
@@ -32,6 +45,8 @@ def assign_oa(df: pd.DataFrame, boundaries: gpd.GeoDataFrame) -> pd.DataFrame:
     어느 집계구 폴리곤에도 속하지 않는 격자(경계 근처 잔차, 또는 강남·춘천
     외 지역)는 버린다 — 가장 가까운 폴리곤에 강제로 배정하지 않는다.
     """
+    import geopandas as gpd
+
     points = gpd.GeoDataFrame(
         df, geometry=gpd.points_from_xy(df["X_COORD"], df["Y_COORD"]), crs=boundaries.crs
     )

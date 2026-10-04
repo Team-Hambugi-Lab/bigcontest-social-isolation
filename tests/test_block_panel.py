@@ -1,10 +1,12 @@
 """집계구 패널 집계 단위 테스트."""
 
-import geopandas as gpd
 import pandas as pd
-from shapely.geometry import Polygon
+import pytest
 
-from src.features.block_panel import aggregate_to_block, assign_oa
+gpd = pytest.importorskip("geopandas")
+from shapely.geometry import Polygon  # noqa: E402
+
+from src.features.block_panel import aggregate_to_block, assign_oa  # noqa: E402
 
 
 def _square_boundaries() -> gpd.GeoDataFrame:
