@@ -47,3 +47,7 @@ YYMMDD_유형_주제.ipynb
 제목 다음에는 분석 목적, 데이터 파일명과 기간, 주요 파라미터, 난수 시드, 실행 환경을 기록합니다. 집계 데이터의 해석 범위와 알려진 한계도 함께 명시합니다.
 
 상세 출력 규칙은 [`.claude/rules/04_output_format.md`](../.claude/rules/04_output_format.md)를 따릅니다.
+
+## SGIS 집계구 병합
+
+[261008_GIS_sgis_census_merge.ipynb](261008_GIS_sgis_census_merge.ipynb): 2024년 SGIS 통계를 2025년 월별 마스터에 연결합니다. 데이터 배치와 실행 방법은 [실행 안내](../docs/sgis-census-merge.md)를 참고하세요.
