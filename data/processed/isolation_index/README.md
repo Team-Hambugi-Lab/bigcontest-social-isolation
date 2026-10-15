@@ -1,13 +1,13 @@
 # 고립 위험 지수 프로토타입 결과
 
-[이슈 #13](https://github.com/Team-Hambugi-Lab/bigcontest-social-isolation/issues/13)의 외부 검증용으로 공유한 결과다. 사용자가 제공한 CSV를 값이나 행을 수정하지 않고 저장했다. 노트북 경로 수정 후 새로 계산한 결과는 아니다.
+[이슈 #13](https://github.com/Team-Hambugi-Lab/bigcontest-social-isolation/issues/13)의 외부 검증용 결과 안내다. 결과 CSV는 Git으로 추적하지 않으며, 팀 공유 경로 `data/interim/1차 지역 결과/`에서 별도로 전달한다. 아래 설명은 사용자가 제공한 기존 결과를 기준으로 하며, 노트북 경로 수정 후 새로 계산한 결과는 아니다.
 
 ## 공유 파일
 
 | 파일 | 설정 | 행·열 |
 | --- | --- | --- |
-| [isolation_index_prototype.csv](isolation_index_prototype.csv) | 노후주택 포함, 6개 차원 등가중 | 1,649행 × 24열 |
-| [isolation_index_no_oldho.csv](isolation_index_no_oldho.csv) | 노후주택 가중치 0, 나머지 5개 차원 등가중 | 1,649행 × 24열 |
+| `isolation_index_prototype.csv` | 노후주택 포함, 6개 차원 등가중 | 1,649행 × 24열 |
+| `isolation_index_no_oldho.csv` | 노후주택 가중치 0, 나머지 5개 차원 등가중 | 1,649행 × 24열 |
 
 두 파일은 강남구 1,055개, 춘천시 594개 집계구를 포함한다. 노후주택 제외 파일에도 `p_oldho`, `z_p_oldho` 열은 참고용으로 남아 있지만 종합점수의 가중치는 0이다.
 
@@ -46,7 +46,7 @@ data/raw/reference_data/춘천_집계구경계/bnd_oa_32010_2025_2Q.shp
 
 경계 파일은 지도·공간 파일 저장 셀에서 사용한다. `.shp`뿐 아니라 `.shx`, `.dbf`, `.prj` 등 구성 파일도 같은 폴더에 둔다. 노트북은 입력 마스터를 별도로 준비해야 하며, 결과 CSV 두 개가 입력 마스터를 대체하지 않는다.
 
-CSV, 지도 이미지, 공간 파일의 저장 위치는 모두 이 폴더다. 노트북을 다시 실행하면 같은 이름의 결과 파일을 갱신한다. Git에서는 명시적으로 공유한 CSV 두 개와 이 안내만 추적한다.
+노트북에서 새로 생성하는 CSV, 지도 이미지, 공간 파일의 기본 저장 위치는 이 폴더(`data/processed/isolation_index/`)다. 노트북을 다시 실행하면 같은 이름의 로컬 결과 파일을 갱신한다. Git에서는 이 안내만 추적하며 CSV와 공간·이미지 결과는 제외한다. 기존 공유 결과는 별도 공유 경로 `data/interim/1차 지역 결과/`에서 받는다.
 
 CSV에는 자료형 정보가 없으므로 집계구·행정동 코드를 문자열로 지정해서 읽는다.
 
@@ -55,7 +55,7 @@ from pathlib import Path
 import pandas as pd
 
 # 저장소 루트에서 실행
-result_dir = Path("data/processed/isolation_index")
+result_dir = Path("data/interim/1차 지역 결과")
 result = pd.read_csv(
     result_dir / "isolation_index_prototype.csv",
     dtype={"TOT_OA_CD": str, "ADM_CD": str},
