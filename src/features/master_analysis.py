@@ -9,6 +9,9 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable
 
+import numpy as np
+import pandas as pd
+
 KEY_COLS = ["STD_YM", "TOT_OA_CD"]
 SGIS_PREFIX = "SGIS2024_"
 
@@ -21,6 +24,7 @@ SGIS_DROP_CODES = frozenset(
 )
 SK_PARTIAL_COLS = ("age_n_partial", "hour_n_partial", "weekday_n_partial")
 READ_DTYPES = {"STD_YM": str, "TOT_OA_CD": str, "ADM_CD": str, "BASE_DATE": str}
+BUSINESS_COUNT_PATTERN = r"cp2?_bnu_\d+"
 
 
 def sgis_drop_columns(columns: Iterable[str]) -> list[str]:
@@ -73,3 +77,29 @@ def drop_reasons(columns: Iterable[str], drop_sk_quality: bool = False) -> dict[
             for c in sk_redundant_quality_columns(columns)
         }
     return reasons
+
+
+def business_count_columns(columns: Iterable[str]) -> list[str]:
+    """업종별 사업체수 SGIS 열(대분류 `cp_bnu_*`, 중분류 `cp2_bnu_*`)을 반환한다."""
+    return [
+        c
+        for c in columns
+        if c.startswith(SGIS_PREFIX)
+        and re.fullmatch(BUSINESS_COUNT_PATTERN, c.removeprefix(SGIS_PREFIX))
+    ]
+
+
+def fill_business_no_record(df: pd.DataFrame, status: pd.DataFrame) -> pd.DataFrame:
+    """사업체수 열에서 SGIS 원본에 기록이 없는(`no_record`) 값을 0으로 채운다.
+
+    업종별 사업체수를 no_record=0으로 합하면 1,698개 집계구 전부 총사업체수(to_fa_010)와
+    일치한다. 그래서 '기록 없음'을 '해당 업종 사업체 없음'으로 본다. 1인가구 등 다른 SGIS
+    열의 no_record는 이런 근거가 없어 결측으로 둔다(이슈 #6: ga_sd_005를 0으로 덮지 않음).
+    """
+    out = df.copy()
+    cols = business_count_columns(out.columns)
+    no_record = (
+        status.set_index("TOT_OA_CD")[cols].reindex(out["TOT_OA_CD"]).eq("no_record").to_numpy()
+    )
+    out[cols] = np.where(no_record, 0.0, out[cols].to_numpy(dtype=float))
+    return out

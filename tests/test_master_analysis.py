@@ -74,6 +74,50 @@ class TestDropColumns:
         assert set(ma.drop_reasons(cols, drop_sk_quality=True)) == set(cols)
 
 
+def _status_frame() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "TOT_OA_CD": ["A", "B"],
+            "SGIS2024_cp2_bnu_47": ["no_record", "numeric"],
+            "SGIS2024_cp_bnu_001": ["numeric", "no_record"],
+            "SGIS2024_ga_sd_005": ["no_record", "source_na"],
+        }
+    )
+
+
+class TestFillBusinessNoRecord:
+    def _df(self) -> pd.DataFrame:
+        # 같은 집계구가 두 달 반복되는 마스터 구조를 흉내 낸다
+        return pd.DataFrame(
+            {
+                "STD_YM": ["202507", "202507", "202508"],
+                "TOT_OA_CD": ["A", "B", "A"],
+                "SGIS2024_cp2_bnu_47": [np.nan, 3.0, np.nan],
+                "SGIS2024_cp_bnu_001": [5.0, np.nan, 5.0],
+                "SGIS2024_ga_sd_005": [np.nan, np.nan, np.nan],
+            }
+        )
+
+    def test_no_record_business_counts_become_zero(self):
+        out = ma.fill_business_no_record(self._df(), _status_frame())
+        assert out["SGIS2024_cp2_bnu_47"].tolist() == [0.0, 3.0, 0.0]
+        assert out["SGIS2024_cp_bnu_001"].tolist() == [5.0, 0.0, 5.0]
+
+    def test_non_business_columns_stay_missing(self):
+        out = ma.fill_business_no_record(self._df(), _status_frame())
+        assert out["SGIS2024_ga_sd_005"].isna().all()
+
+    def test_input_is_not_modified(self):
+        df = self._df()
+        before = df.copy()
+        ma.fill_business_no_record(df, _status_frame())
+        pd.testing.assert_frame_equal(df, before)
+
+    def test_business_count_columns(self):
+        cols = ["SGIS2024_cp2_bnu_47", "SGIS2024_cp_bnu_001", "SGIS2024_cp2_bem_01"]
+        assert ma.business_count_columns(cols) == cols[:2]
+
+
 @pytest.fixture(scope="module")
 def master():
     from src.data import paths
@@ -108,3 +152,24 @@ class TestDropColumnsOnMaster:
             assert master[col].equals(master[rep]) or np.allclose(
                 master[col], master[rep], equal_nan=True
             ), col
+
+
+@pytest.fixture(scope="module")
+def status():
+    from src.data import paths
+
+    return pd.read_csv(paths.master_files()["status"], dtype={"TOT_OA_CD": str})
+
+
+@pytest.mark.requires_data
+class TestFillBusinessNoRecordOnMaster:
+    def test_business_sums_match_total_after_fill(self, master, status):
+        out = ma.fill_business_no_record(master, status)
+        for pattern in (r"^SGIS2024_cp_bnu_\d+$", r"^SGIS2024_cp2_bnu_\d+$"):
+            total = out.filter(regex=pattern).sum(axis=1)
+            assert np.allclose(total, out["SGIS2024_to_fa_010"]), pattern
+
+    def test_one_person_household_missing_is_kept(self, master, status):
+        out = ma.fill_business_no_record(master, status)
+        missing = out.loc[out["SGIS2024_ga_sd_005"].isna(), "TOT_OA_CD"].nunique()
+        assert missing == 59
