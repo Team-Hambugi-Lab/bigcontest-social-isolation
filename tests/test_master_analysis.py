@@ -267,9 +267,7 @@ class TestDropColumnsOnMaster:
                 continue
             family = ma.quality_family(col)
             rep = (
-                f"{family}_n_complete"
-                if col.endswith("_n_valid")
-                else f"{family}_incomplete_rate"
+                f"{family}_n_complete" if col.endswith("_n_valid") else f"{family}_incomplete_rate"
             )
             assert master[col].equals(master[rep]) or np.allclose(
                 master[col], master[rep], equal_nan=True

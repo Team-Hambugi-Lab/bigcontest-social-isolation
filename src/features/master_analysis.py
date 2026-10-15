@@ -63,9 +63,7 @@ def sk_redundant_quality_columns(columns: Iterable[str]) -> list[str]:
     같은 SK 테이블 안에서는 격자가 통째로 있거나 없어서(all-or-nothing) 변수별
     `n_valid`·`missing_rate`가 `{age,hour,weekday}_n_complete`·`_incomplete_rate`와 같다.
     """
-    return [
-        c for c in columns if c.endswith(("_n_valid", "_missing_rate")) or c in SK_PARTIAL_COLS
-    ]
+    return [c for c in columns if c.endswith(("_n_valid", "_missing_rate")) or c in SK_PARTIAL_COLS]
 
 
 def quality_family(column: str) -> str:
@@ -86,8 +84,7 @@ def drop_reasons(columns: Iterable[str], drop_sk_quality: bool = False) -> dict[
     reasons |= {c: "sum과 중복(mean = sum / n_valid)" for c in sk_mean_columns(columns)}
     if drop_sk_quality:
         reasons |= {
-            c: "대표 품질 열과 값이 같거나 항상 0"
-            for c in sk_redundant_quality_columns(columns)
+            c: "대표 품질 열과 값이 같거나 항상 0" for c in sk_redundant_quality_columns(columns)
         }
     return reasons
 
@@ -132,27 +129,18 @@ def add_share_features(df: pd.DataFrame) -> pd.DataFrame:
     빠지므로 분자와 분모가 같은 격자 집합에서 나온다. SK 미매칭 집계구는 분모가
     결측이라 구성비도 결측이다(0으로 채우지 않는다).
     """
-    hour = _shares(
-        df[[f"TMST_{h}_sum" for h in HOURS]], [f"share_hour_{h}" for h in HOURS]
-    )
+    hour = _shares(df[[f"TMST_{h}_sum" for h in HOURS]], [f"share_hour_{h}" for h in HOURS])
     wkdy = _shares(
         df[[f"FLOW_POP_CNT_{d}_sum" for d in WEEKDAYS]], [f"share_wkdy_{d}" for d in WEEKDAYS]
     )
     age_total = pd.DataFrame(
-        {
-            g: df[f"MAN_FLOW_POP_CNT_{g}_sum"] + df[f"WMAN_FLOW_POP_CNT_{g}_sum"]
-            for g in AGE_GROUPS
-        }
+        {g: df[f"MAN_FLOW_POP_CNT_{g}_sum"] + df[f"WMAN_FLOW_POP_CNT_{g}_sum"] for g in AGE_GROUPS}
     )
     age = _shares(age_total, [f"share_age_{g}" for g in AGE_GROUPS])
     extra = pd.DataFrame(
         {
-            "share_dawn": hour[[f"share_hour_{h}" for h in DAWN_HOURS]].sum(
-                axis=1, min_count=1
-            ),
-            "share_weekend": wkdy[[f"share_wkdy_{d}" for d in WEEKEND]].sum(
-                axis=1, min_count=1
-            ),
+            "share_dawn": hour[[f"share_hour_{h}" for h in DAWN_HOURS]].sum(axis=1, min_count=1),
+            "share_weekend": wkdy[[f"share_wkdy_{d}" for d in WEEKEND]].sum(axis=1, min_count=1),
             "is_small_sample": df["HAS_SK_POINTS"] & (df["N_GRID"] <= SMALL_SAMPLE_MAX_GRID),
         }
     )
