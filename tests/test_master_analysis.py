@@ -118,6 +118,54 @@ class TestFillBusinessNoRecord:
         assert ma.business_count_columns(cols) == cols[:2]
 
 
+def _sk_frame() -> pd.DataFrame:
+    """SK 매칭 집계구 1행 + 미매칭 1행 + 소표본 1행."""
+    rows = {"N_GRID": [10, 0, 2], "HAS_SK_POINTS": [True, False, True]}
+    for h in ma.HOURS:
+        rows[f"TMST_{h}_sum"] = [1.0, np.nan, 1.0]
+    rows["TMST_00_sum"] = [25.0, np.nan, 1.0]  # 첫 행 합계 = 25 + 23 = 48
+    for d in ma.WEEKDAYS:
+        rows[f"FLOW_POP_CNT_{d}_sum"] = [10.0, np.nan, 1.0]  # 첫 행 합계 = 70
+    for g in ma.AGE_GROUPS:
+        rows[f"MAN_FLOW_POP_CNT_{g}_sum"] = [5.0, np.nan, 1.0]
+        rows[f"WMAN_FLOW_POP_CNT_{g}_sum"] = [5.0, np.nan, 1.0]  # 첫 행 합계 = 60
+    return pd.DataFrame(rows)
+
+
+class TestAddShareFeatures:
+    def test_adds_40_columns(self):
+        out = ma.add_share_features(_sk_frame())
+        assert out.shape[1] == _sk_frame().shape[1] + 40
+
+    def test_shares_sum_to_one_per_table(self):
+        out = ma.add_share_features(_sk_frame()).iloc[[0, 2]]
+        for prefix in ("share_hour_", "share_wkdy_", "share_age_"):
+            assert np.allclose(out.filter(like=prefix).sum(axis=1), 1.0), prefix
+
+    def test_share_values(self):
+        out = ma.add_share_features(_sk_frame()).iloc[0]
+        assert out["share_hour_00"] == pytest.approx(25 / 48)
+        assert out["share_dawn"] == pytest.approx((25 + 5) / 48)
+        assert out["share_weekend"] == pytest.approx(2 / 7)
+        assert out["share_age_60GU"] == pytest.approx(10 / 60)
+
+    def test_unmatched_row_has_missing_shares_not_zero(self):
+        out = ma.add_share_features(_sk_frame()).iloc[1]
+        shares = out.filter(like="share_")
+        assert shares.isna().all()
+
+    def test_zero_total_gives_missing_share(self):
+        df = _sk_frame().iloc[[0]].copy()
+        df[[f"TMST_{h}_sum" for h in ma.HOURS]] = 0.0
+        out = ma.add_share_features(df)
+        assert out.filter(like="share_hour_").isna().all(axis=None)
+        assert np.isnan(out["share_dawn"].iloc[0])
+
+    def test_small_sample_flag_only_for_matched_blocks(self):
+        out = ma.add_share_features(_sk_frame())
+        assert out["is_small_sample"].tolist() == [False, False, True]
+
+
 @pytest.fixture(scope="module")
 def master():
     from src.data import paths

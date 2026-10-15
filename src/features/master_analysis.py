@@ -25,6 +25,12 @@ SGIS_DROP_CODES = frozenset(
 SK_PARTIAL_COLS = ("age_n_partial", "hour_n_partial", "weekday_n_partial")
 READ_DTYPES = {"STD_YM": str, "TOT_OA_CD": str, "ADM_CD": str, "BASE_DATE": str}
 BUSINESS_COUNT_PATTERN = r"cp2?_bnu_\d+"
+HOURS = [f"{h:02d}" for h in range(24)]
+DAWN_HOURS = HOURS[:6]  # 00~05시
+WEEKDAYS = ["MON", "TUS", "WED", "THU", "FRI", "SAT", "SUN"]  # 마스터 표기 그대로(TUS)
+WEEKEND = ["SAT", "SUN"]
+AGE_GROUPS = ["10G", "20G", "30G", "40G", "50G", "60GU"]
+SMALL_SAMPLE_MAX_GRID = 2  # 격자 1~2개짜리 집계구는 비율이 쉽게 튄다
 
 
 def sgis_drop_columns(columns: Iterable[str]) -> list[str]:
@@ -103,3 +109,44 @@ def fill_business_no_record(df: pd.DataFrame, status: pd.DataFrame) -> pd.DataFr
     )
     out[cols] = np.where(no_record, 0.0, out[cols].to_numpy(dtype=float))
     return out
+
+
+def _shares(values: pd.DataFrame, names: list[str]) -> pd.DataFrame:
+    """행 합계로 나눈 구성비. 합계가 결측이거나 0이면 결측으로 둔다."""
+    total = values.sum(axis=1, min_count=1)
+    total = total.where(total > 0)
+    return values.div(total, axis=0).set_axis(names, axis=1)
+
+
+def add_share_features(df: pd.DataFrame) -> pd.DataFrame:
+    """시간대·요일·연령 구성비, 새벽·주말 비중, 소표본 플래그를 덧붙인다.
+
+    구성비는 같은 SK 테이블 안에서만 계산한다. 같은 테이블 안에서는 격자가 통째로
+    빠지므로 분자와 분모가 같은 격자 집합에서 나온다. SK 미매칭 집계구는 분모가
+    결측이라 구성비도 결측이다(0으로 채우지 않는다).
+    """
+    hour = _shares(
+        df[[f"TMST_{h}_sum" for h in HOURS]], [f"share_hour_{h}" for h in HOURS]
+    )
+    wkdy = _shares(
+        df[[f"FLOW_POP_CNT_{d}_sum" for d in WEEKDAYS]], [f"share_wkdy_{d}" for d in WEEKDAYS]
+    )
+    age_total = pd.DataFrame(
+        {
+            g: df[f"MAN_FLOW_POP_CNT_{g}_sum"] + df[f"WMAN_FLOW_POP_CNT_{g}_sum"]
+            for g in AGE_GROUPS
+        }
+    )
+    age = _shares(age_total, [f"share_age_{g}" for g in AGE_GROUPS])
+    extra = pd.DataFrame(
+        {
+            "share_dawn": hour[[f"share_hour_{h}" for h in DAWN_HOURS]].sum(
+                axis=1, min_count=1
+            ),
+            "share_weekend": wkdy[[f"share_wkdy_{d}" for d in WEEKEND]].sum(
+                axis=1, min_count=1
+            ),
+            "is_small_sample": df["HAS_SK_POINTS"] & (df["N_GRID"] <= SMALL_SAMPLE_MAX_GRID),
+        }
+    )
+    return pd.concat([df, hour, wkdy, age, extra], axis=1)
