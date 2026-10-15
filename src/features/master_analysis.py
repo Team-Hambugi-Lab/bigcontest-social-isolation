@@ -6,11 +6,14 @@
 
 from __future__ import annotations
 
+import argparse
 import re
 from collections.abc import Iterable
 
 import numpy as np
 import pandas as pd
+
+from src.data import paths
 
 KEY_COLS = ["STD_YM", "TOT_OA_CD"]
 SGIS_PREFIX = "SGIS2024_"
@@ -31,6 +34,10 @@ WEEKDAYS = ["MON", "TUS", "WED", "THU", "FRI", "SAT", "SUN"]  # 마스터 표기
 WEEKEND = ["SAT", "SUN"]
 AGE_GROUPS = ["10G", "20G", "30G", "40G", "50G", "60GU"]
 SMALL_SAMPLE_MAX_GRID = 2  # 격자 1~2개짜리 집계구는 비율이 쉽게 튄다
+OUTPUT_NAME = "master_analysis.csv"
+DICTIONARY_NAME = "master_analysis_dictionary.csv"
+SK_SOURCE = "SK 유동인구 2025.07~12"
+SGIS_SOURCE = "SGIS 집계구 통계 2024"
 
 
 def sgis_drop_columns(columns: Iterable[str]) -> list[str]:
@@ -150,3 +157,97 @@ def add_share_features(df: pd.DataFrame) -> pd.DataFrame:
         }
     )
     return pd.concat([df, hour, wkdy, age, extra], axis=1)
+
+
+def build_master_analysis(
+    master: pd.DataFrame, status: pd.DataFrame, drop_sk_quality: bool = False
+) -> pd.DataFrame:
+    """마스터를 분석용 피처 테이블로 정리한다. 입력 마스터는 수정하지 않는다."""
+    out = master.drop(columns=list(drop_reasons(master.columns, drop_sk_quality)))
+    out = fill_business_no_record(out, status)
+    out = add_share_features(out)
+    return out.sort_values(KEY_COLS, ignore_index=True)
+
+
+def derived_definition(column: str) -> tuple[str, str]:
+    """파생 열의 (설명, 계산식)을 반환한다."""
+    if column.startswith("share_hour_"):
+        h = column.removeprefix("share_hour_")
+        return f"{h}시 유동인구 구성비", f"TMST_{h}_sum / sum(TMST_00~23_sum)"
+    if column.startswith("share_wkdy_"):
+        d = column.removeprefix("share_wkdy_")
+        return f"{d} 유동인구 구성비", f"FLOW_POP_CNT_{d}_sum / sum(FLOW_POP_CNT_MON~SUN_sum)"
+    if column.startswith("share_age_"):
+        g = column.removeprefix("share_age_")
+        return (
+            f"{g} 유동인구 구성비(남녀 합산)",
+            f"(MAN+WMAN)_FLOW_POP_CNT_{g}_sum / 남녀 6개 연령대 합계",
+        )
+    if column == "share_dawn":
+        return "새벽(00~05시) 유동인구 비중", "sum(share_hour_00~05)"
+    if column == "share_weekend":
+        return "주말(토·일) 유동인구 비중", "share_wkdy_SAT + share_wkdy_SUN"
+    if column == "is_small_sample":
+        return (
+            "소표본 집계구(격자 1~2개)",
+            f"HAS_SK_POINTS & N_GRID <= {SMALL_SAMPLE_MAX_GRID}",
+        )
+    raise KeyError(column)
+
+
+def build_dictionary(
+    master_columns: Iterable[str],
+    analysis: pd.DataFrame,
+    sgis_dictionary: pd.DataFrame,
+    drop_sk_quality: bool = False,
+) -> pd.DataFrame:
+    """분석 테이블의 열 정의서(유지·파생 열 + 제외 열과 사유)를 만든다."""
+    names = sgis_dictionary.set_index("OUTPUT_COLUMN")["VARIABLE_NAME"]
+    business = set(business_count_columns(analysis.columns))
+    rows = []
+    for col in analysis.columns:
+        if col.startswith(("share_", "is_small_sample")):
+            desc, formula = derived_definition(col)
+            rows.append((col, "파생", SK_SOURCE, desc, formula))
+        elif col.startswith(SGIS_PREFIX):
+            rule = "원값, no_record는 0(업종 없음)" if col in business else "원값, 결측 유지"
+            rows.append((col, "유지", SGIS_SOURCE, names.get(col, ""), rule))
+        elif col.endswith("_sum"):
+            rows.append((col, "유지", SK_SOURCE, "집계구 내 격자 유동인구 합계", "원값"))
+        else:
+            rows.append((col, "유지", "마스터 메타·품질", "", "원값"))
+    for col, reason in drop_reasons(master_columns, drop_sk_quality).items():
+        source = SGIS_SOURCE if col.startswith(SGIS_PREFIX) else SK_SOURCE
+        rows.append((col, "제외", source, names.get(col, ""), reason))
+    return pd.DataFrame(
+        rows, columns=["COLUMN", "STATUS", "SOURCE", "DESCRIPTION", "FORMULA_OR_REASON"]
+    )
+
+
+def main(argv: list[str] | None = None) -> None:
+    """마스터를 읽어 분석 테이블과 열 정의서를 data/processed/에 저장한다."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--drop-sk-quality",
+        action="store_true",
+        help="대표 품질 열과 값이 같은 SK 품질 열 89개를 뺀다(팀 확인 후 사용)",
+    )
+    args = parser.parse_args(argv)
+
+    files = paths.master_files()
+    master = pd.read_csv(files["master"], dtype=READ_DTYPES)
+    status = pd.read_csv(files["status"], dtype={"TOT_OA_CD": str})
+    sgis_dictionary = pd.read_csv(files["dictionary"])
+
+    analysis = build_master_analysis(master, status, args.drop_sk_quality)
+    dictionary = build_dictionary(master.columns, analysis, sgis_dictionary, args.drop_sk_quality)
+
+    paths.PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    analysis.to_csv(paths.PROCESSED_DIR / OUTPUT_NAME, index=False, encoding="utf-8")
+    dictionary.to_csv(paths.PROCESSED_DIR / DICTIONARY_NAME, index=False, encoding="utf-8")
+    print(f"saved {OUTPUT_NAME}: {analysis.shape[0]:,} rows x {analysis.shape[1]} cols")
+    print(f"saved {DICTIONARY_NAME}: {len(dictionary)} rows")
+
+
+if __name__ == "__main__":
+    main()

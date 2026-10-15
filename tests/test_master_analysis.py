@@ -166,6 +166,80 @@ class TestAddShareFeatures:
         assert out["is_small_sample"].tolist() == [False, False, True]
 
 
+def _mini_master() -> pd.DataFrame:
+    sk = _sk_frame().iloc[[0, 1]].reset_index(drop=True)
+    meta = pd.DataFrame(
+        {
+            "STD_YM": ["202507", "202507"],
+            "TOT_OA_CD": ["B", "A"],  # 정렬 확인용으로 역순
+            "TMST_00_mean": [1.0, np.nan],
+            "TMST_00_n_valid": [3, 0],
+            "SGIS2024_ga_sd_004": [np.nan, np.nan],
+            "SGIS2024_cp2_bnu_47": [np.nan, 2.0],
+            "SGIS2024_ga_sd_005": [7.0, np.nan],
+        }
+    )
+    return pd.concat([meta, sk], axis=1)
+
+
+def _mini_status() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "TOT_OA_CD": ["A", "B"],
+            "SGIS2024_cp2_bnu_47": ["numeric", "no_record"],
+            "SGIS2024_ga_sd_005": ["no_record", "numeric"],
+        }
+    )
+
+
+class TestBuildMasterAnalysis:
+    def test_drops_agreed_columns_and_keeps_quality_by_default(self):
+        out = ma.build_master_analysis(_mini_master(), _mini_status())
+        assert "SGIS2024_ga_sd_004" not in out.columns
+        assert "TMST_00_mean" not in out.columns
+        assert "TMST_00_n_valid" in out.columns
+
+    def test_drop_sk_quality_option(self):
+        out = ma.build_master_analysis(_mini_master(), _mini_status(), drop_sk_quality=True)
+        assert "TMST_00_n_valid" not in out.columns
+
+    def test_keys_first_and_sorted(self):
+        out = ma.build_master_analysis(_mini_master(), _mini_status())
+        assert out.columns[:2].tolist() == ma.KEY_COLS
+        assert out["TOT_OA_CD"].tolist() == ["A", "B"]
+
+    def test_input_is_not_modified(self):
+        master = _mini_master()
+        before = master.copy()
+        ma.build_master_analysis(master, _mini_status())
+        pd.testing.assert_frame_equal(master, before)
+
+
+class TestBuildDictionary:
+    def test_lists_kept_derived_and_dropped_columns(self):
+        master = _mini_master()
+        out = ma.build_master_analysis(master, _mini_status())
+        sgis_dict = pd.DataFrame(
+            {
+                "OUTPUT_COLUMN": ["SGIS2024_ga_sd_005", "SGIS2024_cp2_bnu_47"],
+                "VARIABLE_NAME": ["1인가구", "소매업"],
+            }
+        )
+
+        d = ma.build_dictionary(master.columns, out, sgis_dict).set_index("COLUMN")
+
+        assert d.columns.tolist() == ["STATUS", "SOURCE", "DESCRIPTION", "FORMULA_OR_REASON"]
+        assert set(d.index) == set(out.columns) | {"SGIS2024_ga_sd_004", "TMST_00_mean"}
+        assert d.loc["SGIS2024_ga_sd_005", "DESCRIPTION"] == "1인가구"
+        assert d.loc["share_hour_00", "STATUS"] == "파생"
+        assert d.loc["TMST_00_mean", "STATUS"] == "제외"
+        assert "no_record" in d.loc["SGIS2024_cp2_bnu_47", "FORMULA_OR_REASON"]
+
+    def test_derived_definition_rejects_unknown(self):
+        with pytest.raises(KeyError):
+            ma.derived_definition("TMST_00_sum")
+
+
 @pytest.fixture(scope="module")
 def master():
     from src.data import paths
@@ -221,3 +295,39 @@ class TestFillBusinessNoRecordOnMaster:
         out = ma.fill_business_no_record(master, status)
         missing = out.loc[out["SGIS2024_ga_sd_005"].isna(), "TOT_OA_CD"].nunique()
         assert missing == 59
+
+
+@pytest.fixture(scope="module")
+def analysis(master, status):
+    return ma.build_master_analysis(master, status)
+
+
+@pytest.mark.requires_data
+class TestMasterAnalysisOnMaster:
+    def test_shape_and_keys(self, analysis):
+        assert analysis.shape == (10_188, 375)  # 491 - 113 - 43 + 40
+        assert not analysis.duplicated(ma.KEY_COLS).any()
+        assert analysis["TOT_OA_CD"].str.len().eq(14).all()
+        assert analysis["TOT_OA_CD"].nunique() == 1_698
+
+    def test_drop_sk_quality_shape(self, master, status):
+        out = ma.build_master_analysis(master, status, drop_sk_quality=True)
+        assert out.shape == (10_188, 286)
+
+    def test_shares_sum_to_one_for_matched_blocks(self, analysis):
+        matched = analysis[analysis["HAS_SK_POINTS"]]
+        for prefix in ("share_hour_", "share_wkdy_", "share_age_"):
+            assert np.allclose(matched.filter(like=prefix).sum(axis=1), 1.0), prefix
+
+    def test_unmatched_blocks_kept_with_missing_shares(self, analysis):
+        unmatched = analysis[~analysis["HAS_SK_POINTS"]]
+        assert unmatched["TOT_OA_CD"].nunique() == 3
+        assert unmatched.filter(like="share_").isna().all(axis=None)
+
+    def test_small_sample_blocks(self, analysis):
+        assert analysis.loc[analysis["is_small_sample"], "TOT_OA_CD"].nunique() == 150
+
+    def test_master_not_modified(self, master, status):
+        before = master.copy()
+        ma.build_master_analysis(master, status)
+        pd.testing.assert_frame_equal(master, before)
