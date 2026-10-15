@@ -47,3 +47,37 @@ def test_list_raw_files_counts_20():
     inv = paths.list_raw_files()
     assert len(inv) == 20
     assert set(inv["group"]) == {"sk", "card"}
+
+
+def test_master_files_finds_files_in_any_subfolder(tmp_path):
+    sub = tmp_path / "1차 merge"
+    sub.mkdir()
+    for name in paths.MASTER_FILE_NAMES.values():
+        (sub / name).write_text("x")
+
+    found = paths.master_files(tmp_path)
+
+    assert set(found) == {"master", "status", "dictionary"}
+    assert found["master"].name == "master_sgis2024.csv"
+    assert all(p.exists() for p in found.values())
+
+
+def test_master_files_rejects_missing_file(tmp_path):
+    with pytest.raises(FileNotFoundError, match="master_sgis2024.csv"):
+        paths.master_files(tmp_path)
+
+
+def test_master_files_rejects_ambiguous_copies(tmp_path):
+    for folder in ("a", "b"):
+        (tmp_path / folder).mkdir()
+        for name in paths.MASTER_FILE_NAMES.values():
+            (tmp_path / folder / name).write_text("x")
+
+    with pytest.raises(FileNotFoundError, match="found 2"):
+        paths.master_files(tmp_path)
+
+
+@pytest.mark.requires_data
+def test_master_files_exist_in_interim():
+    found = paths.master_files()
+    assert all(p.exists() for p in found.values())
