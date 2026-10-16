@@ -27,11 +27,16 @@ credentials/
 # 데이터 (원본 데이터는 추적하지 않음)
 data/raw/*
 data/interim/
-data/processed/
+data/processed/*
 !data/raw/.gitkeep
 !data/raw/README.md
 !data/interim/.gitkeep
 !data/processed/.gitkeep
+
+# 이슈 #13 실행 안내만 추적하며 결과 CSV는 로컬에 보관
+!data/processed/isolation_index/
+data/processed/isolation_index/*
+!data/processed/isolation_index/README.md
 
 # 모델 아티팩트
 models/
