@@ -11,15 +11,15 @@
       "Read(secrets/**)",
       "Read(credentials/**)",
       "Read(data/raw/private/**)",
-      "Write(.env)",
-      "Write(.env.local)",
-      "Write(.env.*.local)",
-      "Write(.env.development)",
-      "Write(.env.test)",
-      "Write(.env.production)",
-      "Write(.env.staging)",
-      "Write(secrets/**)",
-      "Write(credentials/**)"
+      "Edit(.env)",
+      "Edit(.env.local)",
+      "Edit(.env.*.local)",
+      "Edit(.env.development)",
+      "Edit(.env.test)",
+      "Edit(.env.production)",
+      "Edit(.env.staging)",
+      "Edit(secrets/**)",
+      "Edit(credentials/**)"
     ]
   }
 }
