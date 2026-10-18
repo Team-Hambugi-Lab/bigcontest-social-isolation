@@ -178,10 +178,11 @@ log(FLOW_a) ~ log(RESIDENT_a) + log1p(EMPLOYEES) + log(FLOW_OTHER_a) + C(STD_YM)
 - [x] 결과를 보고서 "데이터 점검" 절에 기록 (`reports/261017_REG_h4_activity_signal.md`, 재현 `scripts/h4_data_check.py`)
 
 ### Task 2: 피처 모듈 `src/features/h4_age_panel.py`
-- [ ] `resident_by_band(master, status)` → 집계구 × 연령대 거주 인구(점추정·하한·상한·비공개 칸 수)
-- [ ] `flow_by_band(master)` → 집계구 × 월 × 연령대 유동, `FLOW_OTHER`
-- [ ] `hold_reasons(panel, ...)` → `HOLD_REASON`, `JUDGEMENT_STATUS`
-- [ ] 테스트 `tests/test_h4_age_panel.py`: 합성 데이터로 구간 매핑, `source_na`/`no_record` 처리, 60대 이상 하한·상한 방향, 보류 사유 결합 확인
+- [x] `resident_by_band(master, status)` → 집계구 × 연령대 거주 인구(점추정·하한·상한·비공개 칸 수)
+- [x] `flow_by_band(master)` → 집계구 × 월 × 연령대 유동, `FLOW_OTHER`
+- [x] `oa_table(master)` → 집계구 속성표, `hold_reasons(resident, oa, ...)` → `HOLD_REASON`, `JUDGEMENT_STATUS`
+- [x] 테스트 `tests/test_h4_age_panel.py`: 합성 데이터로 구간 매핑, `source_na`/`no_record` 처리, 60대 이상 하한·상한 방향, 보류 사유 결합 확인
+- [x] 실데이터 테스트: 1,698 × 6행, `no_resident` 30·`institution` 15·`extreme_visitor` 11개, 요양시설 집계구 60대 이상 > 300명, 유동 결측 108행
 
 ### Task 3: 모델·신호 모듈 `src/modeling/h4_activity_signal.py`
 - [ ] `fit_expected(panel, band, spec)` → 계수, R², 잔차
