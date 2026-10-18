@@ -18,6 +18,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 
 from src.data import paths
+from src.features import card_cohort
 from src.features import h4_age_panel as h4
 
 RANDOM_STATE = 42
@@ -38,6 +39,7 @@ OUTPUTS = {
     "diagnostics": paths.INTERIM_DIR / "h4_model_diagnostics.csv",
     "coefficients": paths.INTERIM_DIR / "h4_model_coefficients.csv",
     "resident_quantile": paths.INTERIM_DIR / "h4_resident_quantile_check.csv",
+    "card_context": paths.PROCESSED_DIR / "card_sgg_context.csv",
 }
 PRIORITY_BANDS = ("60GU", "20G", "30G")
 
@@ -322,6 +324,24 @@ def coefficient_table(result: dict, bands=PRIORITY_BANDS) -> pd.DataFrame:
 
 
 DICTIONARIES = {
+    "card_context": [
+        ("MCT_SGG_CD", "가맹점 시군구(서울 강남구·강원 춘천시)", "", ""),
+        ("SEX_CCD", "성별", "", ""),
+        ("age_band", "카드 연령대(10~90, 10세 단위)", "세", ""),
+        ("AGE_BAND", "SK 연령대 대응(60 이상은 60GU)", "", ""),
+        ("amount", "이용금액 합(2025-07~12)", "원", ""),
+        ("amount_ex", "미분류·비소비 업종(ZZ_나머지, 세금공과금)을 뺀 이용금액 합", "원", ""),
+        ("CLASSIFIED_SHARE", "amount_ex / amount", "비율", ""),
+        ("SOCIAL_SHARE_AMOUNT", "대면 관계 소비 12종 금액 / amount_ex", "비율", ""),
+        ("SOCIAL_SHARE_COUNT", "대면 관계 소비 12종 건수 / 미분류 제외 건수", "비율", ""),
+        (
+            "OUTSIDE_SHARE",
+            "춘천 가맹점의 강원 밖 고객 건수 비중. 고객 거주지가 시도 단위라 강원 다른 시군 "
+            "고객은 지역 고객으로 잡혀 과소 추정",
+            "비율",
+            "강남(서울 고객이 강남구민인지 알 수 없음)",
+        ),
+    ],
     "signal_oa": [
         ("TOT_OA_CD", "집계구 코드(14자리 문자열)", "", ""),
         ("AGE_BAND", "SK 연령대(10G~50G, 60GU=60대 이상)", "", ""),
@@ -404,6 +424,7 @@ def main() -> None:
     """기본 설정 결과, 진단, 민감도를 저장한다."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--skip-sensitivity", action="store_true")
+    parser.add_argument("--skip-card", action="store_true", help="신한카드 맥락표를 만들지 않는다")
     args = parser.parse_args()
 
     master = pd.read_csv(MASTER_PATH, dtype={"STD_YM": str, "TOT_OA_CD": str, "ADM_CD": str})
@@ -419,6 +440,9 @@ def main() -> None:
     save(coefficient_table(result), "coefficients")
     if not args.skip_sensitivity:
         save(sensitivity(master, status, result), "sensitivity")
+    if not args.skip_card:
+        context = card_cohort.sgg_context(card_cohort.cohort_panel(card_cohort.prepare_card(2)))
+        save(context[[c for c, *_ in DICTIONARIES["card_context"]]], "card_context")
 
 
 if __name__ == "__main__":

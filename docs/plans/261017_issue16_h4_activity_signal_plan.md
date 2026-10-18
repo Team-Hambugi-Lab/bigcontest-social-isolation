@@ -203,7 +203,7 @@ log(FLOW_a) ~ log(RESIDENT_a) + log1p(EMPLOYEES) + log(FLOW_OTHER_a) + C(STD_YM)
   - 선택 의존성은 모듈 최상단이 아니라 함수 안에서 import한다. 최상단 import가 실패하면 `-m`으로 제외해도 수집 단계에서 깨진다
 
 ### Task 4: 신한카드 맥락 `card_sgg_context.csv`
-- [ ] `card_cohort` 재사용, 지역 × 성별 × 연령대 표와 열 정의서
+- [x] `card_cohort.sgg_context()` 추가, 지역 × 성별 × 카드 연령대(10~90) 36행과 열 정의서. `h4_activity_signal` 실행 시 함께 저장(`--skip-card`로 생략)
 
 ### Task 5: 민감도와 보고서
 - [ ] 민감도 표 작성

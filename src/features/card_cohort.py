@@ -98,6 +98,31 @@ def cohort_panel(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+SK_SENIOR_AGE = 60  # SK는 60대 이상을 한 구간(60GU)으로 준다
+
+
+def sgg_context(panel: pd.DataFrame) -> pd.DataFrame:
+    """6개월을 합친 지역 x 성 x 연령 소비 맥락표를 만든다(이슈 #16 맥락 자료, 판정에 쓰지 않음).
+
+    외지 고객 비중은 춘천만 낸다. 고객 거주지가 시도 단위라 '강원 밖' 고객 비중이며,
+    강원의 다른 시군 고객은 지역 고객으로 잡혀 외지 비중이 과소 추정된다.
+    """
+    keys = ["MCT_SGG_CD", "SEX_CCD", "age_band"]
+    out = panel.groupby(keys, observed=True)[
+        ["amount", "count", "amount_ex", "count_ex", "social_amount", "social_count", "local_count"]
+    ].sum()
+    out["CLASSIFIED_SHARE"] = out["amount_ex"] / out["amount"]
+    out["SOCIAL_SHARE_AMOUNT"] = out["social_amount"] / out["amount_ex"]
+    out["SOCIAL_SHARE_COUNT"] = out["social_count"] / out["count_ex"]
+    is_local_region = out.index.get_level_values("MCT_SGG_CD").isin(list(LOCAL_SIDO))
+    out["OUTSIDE_SHARE"] = (1 - out["local_count"] / out["count"]).where(is_local_region)
+    out = out.reset_index()
+    out["AGE_BAND"] = (out["age_band"].astype(str) + "G").mask(
+        out["age_band"] >= SK_SENIOR_AGE, "60GU"
+    )
+    return out
+
+
 def truncation_stats(
     df: pd.DataFrame,
     by: list[str],

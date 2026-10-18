@@ -109,3 +109,15 @@ def test_local_flag_only_set_for_chuncheon(card):
     assert card_cohort.LOCAL_SIDO == {"강원 춘천시": "강원"}
     assert not card.loc[card["MCT_SGG_CD"] == "서울 강남구", "is_local"].any()
     assert card.loc[card["MCT_SGG_CD"] == "강원 춘천시", "is_local"].any()
+
+
+def test_sgg_context_shares(panel):
+    ctx = card_cohort.sgg_context(panel)
+    assert len(ctx) == 2 * 2 * 9  # 지역 x 성별 x 연령 9개, 6개월 합산
+    for c in ("CLASSIFIED_SHARE", "SOCIAL_SHARE_AMOUNT", "SOCIAL_SHARE_COUNT"):
+        assert ctx[c].between(0, 1).all()
+    gangnam = ctx["MCT_SGG_CD"] == "서울 강남구"
+    assert ctx.loc[gangnam, "OUTSIDE_SHARE"].isna().all()
+    assert ctx.loc[~gangnam, "OUTSIDE_SHARE"].between(0, 1).all()
+    assert set(ctx.loc[ctx["age_band"] >= 60, "AGE_BAND"]) == {"60GU"}
+    assert set(ctx.loc[ctx["age_band"] == 20, "AGE_BAND"]) == {"20G"}
