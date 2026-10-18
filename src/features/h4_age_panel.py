@@ -156,6 +156,7 @@ def hold_reasons(
     min_resident: float = MIN_RESIDENT,
     work_q: float = WORK_Q,
     work_q_youth: float = WORK_Q_YOUTH,
+    work_by_region: bool = True,
 ) -> pd.DataFrame:
     """집계구 × 연령대에 `HOLD_REASON`(`;` 연결)과 `JUDGEMENT_STATUS`를 붙인다."""
     out = resident.join(oa[["REGION", "ADM_CD"]], on="TOT_OA_CD")
@@ -163,7 +164,9 @@ def hold_reasons(
     pop = attr["POP"].where(attr["POP"] > 0)
     household_pop = attr["HOUSEHOLDS"] * attr["HOUSEHOLD_SIZE"]
     # 업무지 분위는 지역 안에서 센다. 합쳐서 세면 춘천 업무지가 거의 걸리지 않는다.
-    work_ratio = (oa["EMP"] / oa["POP"].where(oa["POP"] > 0)).groupby(oa["REGION"])
+    work_ratio = oa["EMP"] / oa["POP"].where(oa["POP"] > 0)
+    if work_by_region:
+        work_ratio = work_ratio.groupby(oa["REGION"])
     work_pct = work_ratio.rank(pct=True).reindex(out["TOT_OA_CD"]).to_numpy()
     work_cut = np.where(out["AGE_BAND"].isin(YOUTH_BANDS), 1 - work_q_youth, 1 - work_q)
 
