@@ -205,7 +205,8 @@ def build_risk_features_youth() -> pd.DataFrame:
         parts.append(mohw_feature_table(mohw_survey.load_survey(data_sheet), group))
     parts.append(seoul_evidence_table(seoul_survey.build_seoul_tables()))
     parts.append(mohw_survey.build_support_tables().assign(SOURCE=MOHW_SOURCE))
-    return pd.concat(parts, ignore_index=True).reindex(columns=OUTPUT_COLUMNS)
+    out = pd.concat(parts, ignore_index=True).reindex(columns=OUTPUT_COLUMNS)
+    return out.astype({"N": "Int64", "OPTION_CODE": "Int64"})  # 결측이 섞여도 정수로 저장
 
 
 def feature_supports(df: pd.DataFrame, support_labels: dict[str, str]) -> pd.DataFrame:
