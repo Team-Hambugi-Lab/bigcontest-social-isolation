@@ -43,7 +43,7 @@
 
 <!-- ① 탐지·판단 -->
 <rect x="330" y="140" width="84" height="84" rx="8" fill="#3F8A80"/><text x="372" y="187" class="b" text-anchor="middle">온보딩</text>
-<text x="330" y="240" class="t">온보딩 · 분류</text><text x="330" y="256" class="s">특징 코드 부여, 동의 수집</text>
+<text x="330" y="240" class="t">온보딩 · 분류</text><text x="330" y="256" class="s">특징 코드, 거주지·연령, 동의</text>
 <rect x="330" y="370" width="84" height="84" rx="8" fill="#3F8A80"/><text x="372" y="417" class="b" text-anchor="middle">관찰</text>
 <text x="424" y="400" class="t">지속 관찰 (축별)</text><text x="424" y="416" class="s">체크인 · 무응답</text><text x="424" y="431" class="s">이동 요약(동의자)</text>
 <rect x="600" y="110" width="84" height="84" rx="8" fill="#6B7280"/><text x="642" y="157" class="b" text-anchor="middle">사전</text>
@@ -55,9 +55,9 @@
 
 <!-- ② 추천 -->
 <rect x="920" y="110" width="84" height="84" rx="8" fill="#5B8E3E"/><text x="962" y="157" class="b" text-anchor="middle">추천</text>
-<text x="1014" y="140" class="t">추천 · 연계</text><text x="1014" y="156" class="s">특징 → 자원 태그 매칭</text><text x="1014" y="171" class="s">티어별 연계 강도</text>
+<text x="1014" y="140" class="t">추천 · 연계</text><text x="1014" y="156" class="s">특징 → 매핑표 → 태그</text><text x="1014" y="171" class="s">지역·대상·거리, 연계 강도</text>
 <rect x="920" y="250" width="84" height="84" rx="8" fill="#6B7280"/><text x="962" y="297" class="b" text-anchor="middle">자원</text>
-<text x="1014" y="280" class="t">기관·자원 DB</text><text x="1014" y="296" class="s">특성 태그 · 위치</text><text x="1014" y="311" class="s">운영 상태</text>
+<text x="1014" y="280" class="t">기관 DB · 지원사업</text><text x="1014" y="296" class="s">기관 17,925 · 사업 60</text><text x="1014" y="311" class="s">서비스 태그 16종</text>
 <rect x="920" y="390" width="84" height="84" rx="8" fill="#5B8E3E"/><text x="962" y="437" class="b" text-anchor="middle">후속</text>
 <text x="1014" y="420" class="t">후속 확인</text><text x="1014" y="436" class="s">이용 여부 · 효과</text><text x="1014" y="451" class="s">→ 재분류</text>
 
@@ -65,7 +65,7 @@
 <rect x="1250" y="110" width="84" height="84" rx="8" fill="#B0435F"/><text x="1292" y="157" class="b" text-anchor="middle">기관</text>
 <text x="1344" y="140" class="t">복지기관</text><text x="1344" y="156" class="s">행정복지센터 · 복지관</text><text x="1344" y="171" class="s">프로그램 · 사례관리</text>
 <rect x="1250" y="250" width="84" height="84" rx="8" fill="#B0435F"/><text x="1292" y="297" class="b" text-anchor="middle">위기</text>
-<text x="1344" y="280" class="t">위기 대응</text><text x="1344" y="296" class="s">109 · 119</text><text x="1344" y="311" class="s">지정 담당자 즉시 이관</text>
+<text x="1344" y="280" class="t">위기 대응</text><text x="1344" y="296" class="s">109 · 위기 상담 기관</text><text x="1344" y="311" class="s">지정 담당자 즉시 이관</text>
 <rect x="1250" y="390" width="84" height="84" rx="8" fill="#B0435F"/><text x="1292" y="437" class="b" text-anchor="middle">지자체</text>
 <text x="1344" y="420" class="t">자원 공백 보고</text><text x="1344" y="436" class="s">프로그램 개설 제안</text><text x="1344" y="451" class="s">미가입 주민 발굴</text>
 
@@ -147,7 +147,7 @@
   <line x1="0" y1="132" x2="34" y2="132" class="ln"/><text x="42" y="136" class="s">실선 = 매 사용자 흐름</text>
   <line x1="0" y1="154" x2="34" y2="154" class="ln dash"/><text x="42" y="158" class="s">점선 = 조건부·주기</text>
   <text x="0" y="186" class="s">개인 흐름(1~10): 페르소나 시연</text>
-  <text x="0" y="202" class="s">지역 층(11~12): 실데이터</text>
+  <text x="0" y="202" class="s">추천 자원 DB · 지역 층: 실데이터</text>
 </g>
 
 <!-- 단계 설명 -->
@@ -159,19 +159,19 @@
   <text x="40" y="898">4 체크인 응답 · 무응답 · 이동 요약값(동의자)을 지속 수집</text>
   <text x="40" y="924">5 위험 판단: 특징 기반 티어 + 본인 기준선 대비 이상치</text>
   <text x="40" y="950">6 판단 → 추천: 특징 코드와 티어 전달</text>
-  <text x="560" y="820">7 특징 ↔ 기관 태그 매칭 (거리 · 운영 상태 반영)</text>
+  <text x="560" y="820">7 매핑표 순위대로 태그 기관·모집 중 사업을 찾음 (지역·대상·거리)</text>
   <text x="560" y="846">8 추천을 앱에 전달, 동의 시 기관에 연계 요청</text>
-  <text x="560" y="872" style="fill:#B0435F">9 위기 신호 → 추천 생략, 사람에게 즉시 이관</text>
+  <text x="560" y="872" style="fill:#B0435F">9 위기 신호 → 추천 생략, 사람에게 이관 + 위기 상담 기관 안내</text>
   <text x="560" y="898">10 후속 확인(이용 · 효과) → 관찰로 돌아가 재분류</text>
   <text x="560" y="924">11 월 1회 우선 지원 지역·계층 산출 → 해당 사용자 관찰 빈도↑</text>
-  <text x="560" y="950">12 미가입 주민 발굴, 자원 공백을 지자체에 보고</text>
+  <text x="560" y="950">12 미가입 주민 발굴, 지역×태그 기관 0곳이면 자원 공백 보고</text>
 </g>
 <!-- 시나리오 -->
 <rect x="1080" y="805" width="450" height="160" rx="8" fill="#FAFAFA" stroke="#ccc"/>
 <text x="1096" y="830" class="h">활용 시나리오 (페르소나 예시)</text>
 <text x="1096" y="856" class="s">춘천 70대 1인 남성 — 온보딩에서 SOLO · REL 분류, 1티어</text>
 <text x="1096" y="879" class="s">3주째 외출이 평소보다 크게 줄고 체크인 2회 무응답 → 3티어</text>
-<text x="1096" y="902" class="s">OUT · REL 태그로 경로당 프로그램 · 안부 확인 서비스 추천</text>
+<text x="1096" y="902" class="s">고립 전담기관이 춘천엔 없어 다음 순위 → 노인복지관 · 경로당</text>
 <text x="1096" y="925" class="s">동의 후 행정복지센터 연계, 2주 뒤 이용 여부 확인</text>
 <text x="1096" y="948" class="s">같은 달 지역 층에서 해당 동 60대+가 우선 대상 → 관찰 빈도↑</text>
 </svg>
