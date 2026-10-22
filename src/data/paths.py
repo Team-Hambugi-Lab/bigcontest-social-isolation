@@ -4,6 +4,7 @@ OneDrive가 한글 폴더·파일명을 NFD(자모 분리)로 저장하므로 �
 경로를 만들면 FileNotFoundError가 난다. 한글이 섞인 경로는 glob으로만 찾는다.
 """
 
+import unicodedata
 from pathlib import Path
 
 import pandas as pd
@@ -12,6 +13,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RAW_DIR = PROJECT_ROOT / "data" / "raw"
 SK_DIR = RAW_DIR / "sk_telecom"
 CARD_DIR = RAW_DIR / "shinhan_card"
+REFERENCE_DIR = RAW_DIR / "reference_data"
+INTEREST_GROUP_SUFFIX = "10개_관심집단수.xlsx"
+SGIS_DONG_DBF_NAME = "bnd_dong_00_2025_2Q.dbf"
 INTERIM_DIR = PROJECT_ROOT / "data" / "interim"
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 
@@ -46,6 +50,37 @@ def card_file(dataset: int) -> Path:
     if len(candidates) != 2:
         raise FileNotFoundError(f"expected 2 card CSVs in {CARD_DIR}, found {len(candidates)}")
     return candidates[0] if dataset == 1 else candidates[1]
+
+
+def interest_group_files(reference_dir: Path = REFERENCE_DIR) -> list[Path]:
+    """서울 10개 관심집단수 월별 xlsx 6개를 기준월 순으로 반환한다.
+
+    폴더·파일명이 한글이라 NFD일 수 있어 NFC로 정규화한 이름으로 고른다.
+    파일명 앞 7자(`2025.07`)가 ASCII라 이름순 정렬이 곧 기준월 순이다.
+    """
+    hits = sorted(
+        p
+        for p in reference_dir.glob("*/*.xlsx")
+        if unicodedata.normalize("NFC", p.name).endswith(INTEREST_GROUP_SUFFIX)
+    )
+    if len(hits) != len(MONTHS):
+        raise FileNotFoundError(
+            f"expected {len(MONTHS)} interest group files under {reference_dir}, found {len(hits)}"
+        )
+    return hits
+
+
+def sgis_dong_dbf(raw_dir: Path = RAW_DIR) -> Path:
+    """SGIS 2025년 2분기 행정동 경계 dbf 경로를 반환한다.
+
+    상위 폴더 3단이 한글이라 파일명(ASCII)으로만 찾는다.
+    """
+    hits = sorted(raw_dir.glob(f"*/*/*/{SGIS_DONG_DBF_NAME}"))
+    if len(hits) != 1:
+        raise FileNotFoundError(
+            f"expected 1 {SGIS_DONG_DBF_NAME} under {raw_dir}, found {len(hits)}"
+        )
+    return hits[0]
 
 
 def list_raw_files() -> pd.DataFrame:
