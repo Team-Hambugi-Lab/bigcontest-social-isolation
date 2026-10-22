@@ -3,6 +3,7 @@
 import struct
 import unicodedata
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -220,3 +221,108 @@ def test_real_code_map_is_one_to_one_with_v33_adm(gangnam):
         paths.INTERIM_DIR / "v3.3" / "isolation_index_v3_adm.csv", dtype={"ADM_CD": str}
     )
     assert set(table["ADM_CD"]) == set(adm.loc[adm["REGION"] == "강남구", "ADM_CD"])
+
+
+# --- 2단계: 연관 검증 ---
+
+
+def _table22(theme_b_sign: int = 1) -> pd.DataFrame:
+    """22개 동 검증 표. 테마 A와 대조 지표는 완전 단조, 테마 B는 부호를 고를 수 있다."""
+    x = np.arange(22, dtype=float)
+    return pd.DataFrame(
+        {
+            "dong_cd": [f"{i:02d}" for i in range(22)],
+            "ADM_CD": [f"112307{i:02d}" for i in range(22)],
+            "theme_A_pct_w": x,
+            "theme_B_pct_w": theme_b_sign * x,
+            "score_w": x,
+            "single_share": x,
+            "watch_share": x,
+            "theme_A_hold": x,
+            "theme_B_hold": x,
+            "ratio_pop_all": x * 0.01,
+            "ratio_1in_all": x * 0.1,
+        }
+    )
+
+
+def test_target_columns_put_ratio_pop_first():
+    assert tv.target_columns(_table22()) == ["ratio_pop_all", "ratio_1in_all"]
+
+
+def test_spearman_table_perfect_monotone():
+    out = tv.spearman_table(_table22()).set_index(["predictor", "target"])
+    row = out.loc[("theme_A", "ratio_pop_all")]
+    assert row["rho"] == pytest.approx(1.0)
+    assert row["ci_low"] == pytest.approx(1.0)
+    assert row["loo_min"] == pytest.approx(1.0)
+    assert row["rho_no_rental"] == pytest.approx(1.0)
+    assert len(out) == len(tv.predictor_columns()) * 2
+
+
+def test_theme_diff_is_a_minus_b():
+    out = tv.theme_diff(_table22(theme_b_sign=-1)).set_index("target")
+    assert out.loc["ratio_pop_all", "diff_A_minus_B"] == pytest.approx(2.0)
+    assert out.loc["ratio_pop_all", "ci_low"] == pytest.approx(2.0)
+
+
+def test_bootstrap_is_reproducible_with_seed():
+    table = _table22().assign(ratio_pop_all=np.random.default_rng(0).random(22))
+    preds = {"theme_A": "theme_A_pct_w"}
+    a = tv.bootstrap_rho(table, preds, ["ratio_pop_all"], n_boot=50)
+    b = tv.bootstrap_rho(table, preds, ["ratio_pop_all"], n_boot=50)
+    pd.testing.assert_frame_equal(a, b)
+
+
+def test_leave_one_out_finds_influential_dong():
+    table = _table22()
+    table.loc[0, "ratio_pop_all"] = 1.0  # 첫 동만 순위를 뒤집는 이상값
+    out = tv.leave_one_out_rho(table, {"theme_A": "theme_A_pct_w"}, ["ratio_pop_all"])
+    row = out.loc[("theme_A", "ratio_pop_all")]
+    assert row["loo_max"] == pytest.approx(1.0)
+    assert row["loo_max_drop"] == table.loc[0, "ADM_CD"]
+
+
+def test_sgis_dong_scores_adds_baseline_and_hold_included():
+    adm = pd.DataFrame(
+        {
+            "ADM_CD": ["11230510", "32010110"],
+            "hh_eval": [100.0, 50.0],
+            "hh_single_eval": [40.0, 10.0],
+            "hh_watch": [25.0, 5.0],
+        }
+    )
+    oa = pd.DataFrame(
+        {
+            "ADM_CD": ["11230510", "11230510", "11230510"],
+            "hh_total": [100.0, 300.0, 10.0],
+            "theme_A_score": [1.0, 3.0, None],  # 세 번째는 점수 없음
+            "theme_B_score": [0.0, 1.0, None],
+            "hold": [False, True, True],  # 보류 행도 포함해 가중평균한다
+        }
+    )
+    out = tv.sgis_dong_scores(adm, oa).set_index("ADM_CD")
+    assert list(out.index) == ["11230510"]
+    assert out.loc["11230510", "single_share"] == pytest.approx(0.4)
+    assert out.loc["11230510", "watch_share"] == pytest.approx(0.25)
+    assert out.loc["11230510", "theme_A_hold"] == pytest.approx((100 + 900) / 400)
+
+
+def test_validation_table_rejects_missing_dong():
+    dong = pd.DataFrame({"dong_cd": ["1123051"], "ratio_pop_all": [0.1]})
+    code_map = pd.DataFrame({"dong_cd": ["1123051"], "ADM_CD": ["11230510"], "ADM_NM": ["신사동"]})
+    sgis = pd.DataFrame({"ADM_CD": ["11230510"], "score_w": [50.0]})
+    with pytest.raises(ValueError, match="22"):
+        tv.validation_table(dong, code_map, sgis)
+
+
+@pytest.mark.requires_data
+def test_v33_adm_weighted_means_match_oa_recompute():
+    oa = pd.read_csv(tv.V33_DIR / tv.V33_OA_NAME, dtype={"ADM_CD": str})
+    adm = pd.read_csv(tv.V33_DIR / tv.V33_ADM_NAME, dtype={"ADM_CD": str}).set_index("ADM_CD")
+    ev = oa[~oa["hold"] & oa["score"].notna()]
+    for col in ("score", "theme_A_pct", "theme_B_pct"):
+        weighted = (ev[col] * ev["hh_total"]).groupby(ev["ADM_CD"]).sum()
+        recomputed = weighted / ev.groupby("ADM_CD")["hh_total"].sum()
+        diff = (recomputed - adm.loc[recomputed.index, f"{col}_w"]).abs().max()
+        assert diff < 1e-9

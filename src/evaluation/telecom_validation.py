@@ -5,8 +5,8 @@
 
 분자 '외출-커뮤니케이션이 모두 적은 집단(전체)'은 1인가구의 부분집합이 아니다.
 강남 3,168셀 중 84셀에서 1인가구수보다 크다. 그래서 두 지표를 함께 낸다.
-  ratio_1in = 분자 / 1인가구수  (이슈 정의, 강도 지표라 1을 넘을 수 있다)
-  ratio_pop = 분자 / 총인구     (0~1 비율)
+  ratio_pop = 분자 / 같은 칸 인구 (주 지표, 0~1. 외출·커뮤니케이션이 모두 적은 집단의 추정 비율)
+  ratio_1in = 분자 / 1인가구수   (참고. 1인가구 비중과 ρ = −0.91이라 판정에 쓰지 않는다)
 
 설계: docs/plans/261022_issue25_telecom_validation_design.md
 """
@@ -17,7 +17,9 @@ import argparse
 import struct
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
+from scipy import stats
 
 from src.data import paths
 
@@ -26,8 +28,7 @@ GANGNAM_SGG = "11230"
 N_DONGS = 22
 
 # 서울시 7자리 행정동 코드 → SGIS 8자리. 기본은 끝에 0을 붙인다(h4_external_validation과 같은 방식).
-# 일원2동(1123074)은 SGIS 2025 경계에 없고 같은 자리에 개포3동(11230511)이 있다.
-# 일원2동이 개포3동으로 이름만 바뀐 것이다. 강남구청이 행정동 명칭만 바꾸고 법정동은
+# 일원2동(1123074)이 개포3동(11230511)으로 이름만 바뀐 것이다. 강남구청이 행정동 명칭만 바꾸고 법정동은
 # 유지한다고 안내했고, 통신 20세 이상 인구 / SGIS 총인구가 0.857로 다른 21개 동 범위
 # (0.73~1.34) 안에 있다. 서울시 자료는 개칭 전 코드를 계속 쓴다.
 # TODO: #16 머지 후 h4_external_validation.CODE_EXCEPTIONS와 하나로 합친다.
@@ -60,6 +61,34 @@ DENOMINATORS = {"ratio_1in": "hh_single", "ratio_pop": "pop"}
 LONG_NAME = "gangnam22_telecom_ratio_long.csv"
 DONG_NAME = "gangnam22_telecom_ratio_dong.csv"
 CODE_MAP_NAME = "gangnam22_dong_code_map.csv"
+
+VALIDATION_NAME = "gangnam22_v3_validation.csv"
+SPEARMAN_NAME = "gangnam22_v3_spearman.csv"
+THEME_DIFF_NAME = "gangnam22_v3_theme_diff.csv"
+
+V33_DIR = paths.INTERIM_DIR / "v3.3"
+V33_OA_NAME = "isolation_index_v3.csv"
+V33_ADM_NAME = "isolation_index_v3_adm.csv"
+
+# SGIS 쪽 지표. 주 분석은 v3.3 행정동 집계본(보류 제외, hh_eval 가중)을 그대로 쓴다
+PREDICTORS = {
+    "theme_A": "theme_A_pct_w",
+    "theme_B": "theme_B_pct_w",
+    "composite": "score_w",
+    "single_share": "single_share",  # 기준선: 1인가구 비중
+    "watch_share": "watch_share",  # 보조: 관찰 후보 가구 비중
+}
+# 민감도: 보류 포함 z 점수를 hh_total로 가중평균
+HOLD_INCLUDED = {"theme_A_hold": "theme_A_score", "theme_B_hold": "theme_B_score"}
+TARGET_PREFIXES = ("ratio_pop", "ratio_1in")
+# 테마 가중 판정에 쓰는 비교: 테마 A·B의 대조 지표별 ρ 차이
+THEMES = ("theme_A", "theme_B")
+
+N_BOOT = 2000
+RANDOM_STATE = 42
+CI = (2.5, 97.5)
+# #24 한계 2의 고령 임대단지 후보 (일원1동, 수서동)
+RENTAL_CANDIDATES = ("11230730", "11230750")
 
 DBF_HEADER_SIZE = 32
 DBF_FIELD_SIZE = 32
@@ -207,17 +236,153 @@ def dong_code_table(telecom: pd.DataFrame, sgis: pd.DataFrame) -> pd.DataFrame:
     return table.sort_values("dong_cd", ignore_index=True)
 
 
+def sgis_dong_scores(adm: pd.DataFrame, oa: pd.DataFrame) -> pd.DataFrame:
+    """v3.3 행정동 집계본에 기준선·보조 지표와 보류 포함 민감도 점수를 붙인다(강남만)."""
+    out = adm.loc[adm["ADM_CD"].str.startswith(GANGNAM_SGG)].copy()
+    out["single_share"] = out["hh_single_eval"] / out["hh_eval"]
+    out["watch_share"] = out["hh_watch"] / out["hh_eval"]
+
+    scored = oa.loc[oa["ADM_CD"].str.startswith(GANGNAM_SGG)]
+    hold_included = {}
+    for name, col in HOLD_INCLUDED.items():
+        ok = scored.dropna(subset=[col, "hh_total"])
+        weighted = (ok[col] * ok["hh_total"]).groupby(ok["ADM_CD"]).sum()
+        hold_included[name] = weighted / ok.groupby("ADM_CD")["hh_total"].sum()
+    return out.merge(pd.DataFrame(hold_included), left_on="ADM_CD", right_index=True)
+
+
+def validation_table(
+    dong_ratios: pd.DataFrame, code_map: pd.DataFrame, sgis: pd.DataFrame
+) -> pd.DataFrame:
+    """통신 대조 지표와 SGIS 동 점수를 동 코드 대응표로 붙인다. 22행이 아니면 멈춘다."""
+    keys = code_map[["dong_cd", "ADM_CD", "ADM_NM"]]
+    table = dong_ratios.merge(keys, on="dong_cd", validate="one_to_one").merge(
+        sgis, on="ADM_CD", validate="one_to_one"
+    )
+    if len(table) != N_DONGS:
+        raise ValueError(f"검증 표 {len(table)}행 != {N_DONGS}")
+    return table.sort_values("dong_cd", ignore_index=True)
+
+
+def predictor_columns(include_hold: bool = True) -> dict[str, str]:
+    """SGIS 쪽 지표 이름 → 검증 표 열 이름."""
+    cols = dict(PREDICTORS)
+    if include_hold:
+        cols.update({name: name for name in HOLD_INCLUDED})
+    return cols
+
+
+def target_columns(table: pd.DataFrame) -> list[str]:
+    """검증 표에서 대조 지표 열을 고른다(ratio_pop 먼저)."""
+    return [c for p in TARGET_PREFIXES for c in table.columns if c.startswith(f"{p}_")]
+
+
+def _rho_matrix(
+    table: pd.DataFrame, predictors: dict[str, str], targets: list[str]
+) -> pd.DataFrame:
+    """SGIS 지표 × 대조 지표 Spearman ρ 행렬."""
+    data = table[list(predictors.values()) + targets].rename(
+        columns={v: k for k, v in predictors.items()}
+    )
+    return data.corr(method="spearman").loc[list(predictors), targets]
+
+
+def spearman_table(table: pd.DataFrame) -> pd.DataFrame:
+    """SGIS 지표 × 대조 지표마다 ρ·p, 부트스트랩 구간, leave-one-out 범위를 낸다."""
+    predictors = predictor_columns()
+    targets = target_columns(table)
+    rows = []
+    for name, col in predictors.items():
+        for target in targets:
+            rho, p = stats.spearmanr(table[col], table[target])
+            rows.append({"predictor": name, "target": target, "rho": rho, "p_value": p})
+    out = pd.DataFrame(rows)
+
+    boot = bootstrap_rho(table, predictors, targets)
+    ci = boot.quantile([CI[0] / 100, CI[1] / 100]).T
+    ci.columns = ["ci_low", "ci_high"]
+    loo = leave_one_out_rho(table, predictors, targets)
+    no_rental = _rho_matrix(
+        table[~table["ADM_CD"].isin(RENTAL_CANDIDATES)], predictors, targets
+    ).stack()
+    extra = ci.join(loo).join(no_rental.rename("rho_no_rental"))
+    return out.join(extra, on=["predictor", "target"])
+
+
+def bootstrap_rho(
+    table: pd.DataFrame,
+    predictors: dict[str, str],
+    targets: list[str],
+    n_boot: int = N_BOOT,
+    random_state: int = RANDOM_STATE,
+) -> pd.DataFrame:
+    """동을 복원추출해 ρ를 다시 구한다. 열은 (지표, 대조 지표), 행은 반복이다."""
+    rng = np.random.default_rng(random_state)
+    samples = []
+    for _ in range(n_boot):
+        idx = rng.integers(0, len(table), len(table))
+        samples.append(_rho_matrix(table.iloc[idx], predictors, targets).stack())
+    return pd.DataFrame(samples).reset_index(drop=True)
+
+
+def leave_one_out_rho(
+    table: pd.DataFrame, predictors: dict[str, str], targets: list[str]
+) -> pd.DataFrame:
+    """동을 하나씩 빼고 ρ를 다시 구해 최솟값·최댓값과 그때 뺀 동을 낸다."""
+    runs = {
+        code: _rho_matrix(table[table["ADM_CD"] != code], predictors, targets).stack()
+        for code in table["ADM_CD"]
+    }
+    runs = pd.DataFrame(runs)
+    return pd.DataFrame(
+        {
+            "loo_min": runs.min(axis=1),
+            "loo_max": runs.max(axis=1),
+            "loo_min_drop": runs.idxmin(axis=1),
+            "loo_max_drop": runs.idxmax(axis=1),
+        }
+    )
+
+
+def theme_diff(table: pd.DataFrame) -> pd.DataFrame:
+    """대조 지표마다 ρ(테마 A) − ρ(테마 B)와 부트스트랩 구간을 낸다(§4.5 판정용)."""
+    predictors = {k: PREDICTORS[k] for k in THEMES}
+    targets = target_columns(table)
+    point = _rho_matrix(table, predictors, targets)
+    boot = bootstrap_rho(table, predictors, targets)
+    rows = []
+    for target in targets:
+        diff = boot[("theme_A", target)] - boot[("theme_B", target)]
+        rows.append(
+            {
+                "target": target,
+                "diff_A_minus_B": point.loc["theme_A", target] - point.loc["theme_B", target],
+                "ci_low": np.percentile(diff, CI[0]),
+                "ci_high": np.percentile(diff, CI[1]),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def main(argv: list[str] | None = None) -> None:
-    """1단계: 강남 22개 동 관심집단 비율표와 동 코드 대응표를 data/interim/에 저장한다."""
+    """강남 22개 동 대조 지표(1단계)와 v3.3 연관 검증(2단계) 결과를 data/interim/에 저장한다."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out-dir", type=Path, default=paths.INTERIM_DIR)
     args = parser.parse_args(argv)
 
     df = load_interest_groups()
+    dong = target_ratios(df)
+    code_map = dong_code_table(df, read_dbf(paths.sgis_dong_dbf()))
+    adm = pd.read_csv(V33_DIR / V33_ADM_NAME, dtype={"ADM_CD": str})
+    oa = pd.read_csv(V33_DIR / V33_OA_NAME, dtype={"ADM_CD": str, "TOT_OA_CD": str})
+    table = validation_table(dong, code_map, sgis_dong_scores(adm, oa))
     outputs = {
         LONG_NAME: cell_ratios(df),
-        DONG_NAME: target_ratios(df),
-        CODE_MAP_NAME: dong_code_table(df, read_dbf(paths.sgis_dong_dbf())),
+        DONG_NAME: dong,
+        CODE_MAP_NAME: code_map,
+        VALIDATION_NAME: table,
+        SPEARMAN_NAME: spearman_table(table),
+        THEME_DIFF_NAME: theme_diff(table),
     }
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
