@@ -238,8 +238,10 @@ def _table22(theme_b_sign: int = 1) -> pd.DataFrame:
             "score_w": x,
             "single_share": x,
             "watch_share": x,
-            "theme_A_hold": x,
-            "theme_B_hold": x,
+            "theme_A_z_eval": x,
+            "theme_A_z_all": x,
+            "theme_B_z_eval": x,
+            "theme_B_z_all": x,
             "ratio_pop_all": x * 0.01,
             "ratio_1in_all": x * 0.1,
         }
@@ -283,7 +285,7 @@ def test_leave_one_out_finds_influential_dong():
     assert row["loo_max_drop"] == table.loc[0, "ADM_CD"]
 
 
-def test_sgis_dong_scores_adds_baseline_and_hold_included():
+def test_sgis_dong_scores_adds_baseline_and_z_variants():
     adm = pd.DataFrame(
         {
             "ADM_CD": ["11230510", "32010110"],
@@ -298,14 +300,17 @@ def test_sgis_dong_scores_adds_baseline_and_hold_included():
             "hh_total": [100.0, 300.0, 10.0],
             "theme_A_score": [1.0, 3.0, None],  # 세 번째는 점수 없음
             "theme_B_score": [0.0, 1.0, None],
-            "hold": [False, True, True],  # 보류 행도 포함해 가중평균한다
+            "score": [50.0, None, None],  # 보류 행은 종합 점수가 없다
+            "hold": [False, True, True],
         }
     )
     out = tv.sgis_dong_scores(adm, oa).set_index("ADM_CD")
     assert list(out.index) == ["11230510"]
     assert out.loc["11230510", "single_share"] == pytest.approx(0.4)
     assert out.loc["11230510", "watch_share"] == pytest.approx(0.25)
-    assert out.loc["11230510", "theme_A_hold"] == pytest.approx((100 + 900) / 400)
+    # 같은 z 척도에서 보류 제외는 첫 행만, 보류 포함은 점수 있는 두 행을 가중평균한다
+    assert out.loc["11230510", "theme_A_z_eval"] == pytest.approx(1.0)
+    assert out.loc["11230510", "theme_A_z_all"] == pytest.approx((100 + 900) / 400)
 
 
 def test_validation_table_rejects_missing_dong():

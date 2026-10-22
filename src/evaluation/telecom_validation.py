@@ -75,8 +75,9 @@ PREDICTORS = {
     "single_share": "single_share",  # 기준선: 1인가구 비중
     "watch_share": "watch_share",  # 보조: 관찰 후보 가구 비중
 }
-# 민감도: 보류 포함 z 점수를 hh_total로 가중평균
-HOLD_INCLUDED = {"theme_A_hold": "theme_A_score", "theme_B_hold": "theme_B_score"}
+# 민감도: 테마 z 점수를 hh_total로 가중평균. 척도(z)를 고정하고 보류 제외(_eval)와 포함(_all)만 바꾼다
+Z_SCORES = {"theme_A": "theme_A_score", "theme_B": "theme_B_score"}
+Z_VARIANTS = ("eval", "all")
 TARGET_PREFIXES = ("ratio_pop", "ratio_1in")
 # 테마 가중 판정에 쓰는 비교: 테마 A·B의 대조 지표별 ρ 차이
 THEMES = ("theme_A", "theme_B")
@@ -228,18 +229,24 @@ def dong_code_table(telecom: pd.DataFrame, sgis: pd.DataFrame) -> pd.DataFrame:
 
 
 def sgis_dong_scores(adm: pd.DataFrame, oa: pd.DataFrame) -> pd.DataFrame:
-    """v3.3 행정동 집계본에 기준선·보조 지표와 보류 포함 민감도 점수를 붙인다(강남만)."""
+    """v3.3 행정동 집계본에 기준선·보조 지표와 z 점수 민감도 점수를 붙인다(강남만).
+
+    z 점수는 보류 제외(행정동 집계본과 같은 '보류 아님 & 점수 유효' 행)와 보류 포함 두 가지로
+    가중평균한다. 척도를 고정해야 보류 포함의 효과만 따로 볼 수 있다(#24 재언 님 코멘트).
+    """
     out = adm.loc[adm["ADM_CD"].str.startswith(GANGNAM_SGG)].copy()
     out["single_share"] = out["hh_single_eval"] / out["hh_eval"]
     out["watch_share"] = out["hh_watch"] / out["hh_eval"]
 
-    scored = oa.loc[oa["ADM_CD"].str.startswith(GANGNAM_SGG)]
-    hold_included = {}
-    for name, col in HOLD_INCLUDED.items():
-        ok = scored.dropna(subset=[col, "hh_total"])
-        weighted = (ok[col] * ok["hh_total"]).groupby(ok["ADM_CD"]).sum()
-        hold_included[name] = weighted / ok.groupby("ADM_CD")["hh_total"].sum()
-    return out.merge(pd.DataFrame(hold_included), left_on="ADM_CD", right_index=True)
+    gangnam = oa.loc[oa["ADM_CD"].str.startswith(GANGNAM_SGG)]
+    rows = {"eval": gangnam[~gangnam["hold"] & gangnam["score"].notna()], "all": gangnam}
+    z_scores = {}
+    for theme, col in Z_SCORES.items():
+        for variant in Z_VARIANTS:
+            ok = rows[variant].dropna(subset=[col, "hh_total"])
+            weighted = (ok[col] * ok["hh_total"]).groupby(ok["ADM_CD"]).sum()
+            z_scores[f"{theme}_z_{variant}"] = weighted / ok.groupby("ADM_CD")["hh_total"].sum()
+    return out.merge(pd.DataFrame(z_scores), left_on="ADM_CD", right_index=True)
 
 
 def validation_table(
@@ -259,7 +266,7 @@ def predictor_columns(include_hold: bool = True) -> dict[str, str]:
     """SGIS 쪽 지표 이름 → 검증 표 열 이름."""
     cols = dict(PREDICTORS)
     if include_hold:
-        cols.update({name: name for name in HOLD_INCLUDED})
+        cols.update({f"{t}_z_{v}": f"{t}_z_{v}" for t in Z_SCORES for v in Z_VARIANTS})
     return cols
 
 
