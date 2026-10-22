@@ -1,9 +1,7 @@
-"""#24 v3 기준 코드. 저장소 루트에서 다음과 같이 실행한다.
+"""#24 제공 v3.2. 저장소 루트에서 uv run python -m src.features.isolation_index_v3.
 
-uv run python -m src.features.isolation_index_v3
-
-입력과 출력은 src.data.paths의 공통 경로를 사용한다.
-원자료 재계산과 에이전트 입력 계약의 추가 작업은 docs/isolation_index_v3.md 참조.
+입출력은 src.data.paths의 공통 경로를 사용한다.
+계산 가정과 남은 오류는 docs/isolation_index_v3.md 참조.
 """
 
 from pathlib import Path
@@ -14,7 +12,6 @@ import pandas as pd
 from scipy.stats import spearmanr
 
 pd.set_option("display.width", 180)
-
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -27,8 +24,6 @@ OUT = INTERIM_DIR / "isolation_index_v3.csv"
 OUT_TYPES = OUT.with_suffix(".csvt")
 OUT_DICTIONARY = OUT.with_name(f"{OUT.stem}_dictionary.csv")
 
-
-# 제공 v3의 분석 파라미터
 IMPUTE = 0
 CLIP_Z = 3
 STRATIFY = "REGION"
@@ -36,10 +31,300 @@ WORK_MIXED = 1.0
 WORK_HOLD = 5.0
 GROUP_HOLD = 5.0
 TOP = 0.8
+AGG = "mean"
 THEMES = {"A": ["solo50", "old", "oldho"], "B": ["male_solo", "housv", "other50"]}
 RENTAL_SIG = dict(p_1in=0.55, old=0.40, p_apt=0.90)
 S = "SGIS2024_"
 DIMS = THEMES["A"] + THEMES["B"]
+
+
+def write_dictionary(frame):
+    """이번 출력의 36개 변수 정의와 값 요약을 함께 저장한다."""
+    definitions = [
+        {
+            "column": "TOT_OA_CD",
+            "name_kr": "집계구 코드",
+            "group": "키",
+            "definition": "문자열 14자리. SGIS 집계구 경계와 조인 키",
+            "unit": "—",
+        },
+        {
+            "column": "REGION",
+            "name_kr": "지역",
+            "group": "키",
+            "definition": "강남구 / 춘천시. 백분위·등급은 이 안에서 계산",
+            "unit": "—",
+        },
+        {
+            "column": "ADM_CD",
+            "name_kr": "행정동 코드",
+            "group": "키",
+            "definition": "문자열 8자리. SGIS 경계 bnd_dong_00_2025_2Q.dbf 로 이름 조인 (행안부 코드표와 체계 다름)",
+            "unit": "—",
+        },
+        {
+            "column": "pop_total",
+            "name_kr": "총인구",
+            "group": "가중치",
+            "definition": "SGIS2024_to_in_001",
+            "unit": "명",
+        },
+        {
+            "column": "hh_total",
+            "name_kr": "총가구",
+            "group": "가중치",
+            "definition": "SGIS2024_to_ga_001. 행정동 집계 시 가중치",
+            "unit": "가구",
+        },
+        {
+            "column": "hh_single",
+            "name_kr": "1인가구 수",
+            "group": "가중치",
+            "definition": "SGIS2024_ga_sd_005 (결측=5 미만 비공개 → 0)",
+            "unit": "가구",
+        },
+        {
+            "column": "theme_A_score",
+            "name_kr": "테마 A 점수",
+            "group": "테마",
+            "definition": "solo50·old·oldho z-score 평균",
+            "unit": "z",
+        },
+        {
+            "column": "theme_A_pct",
+            "name_kr": "테마 A 백분위",
+            "group": "테마",
+            "definition": "지역 내 백분위, 보류 제외. 높을수록 고령 독거 위험",
+            "unit": "0~100",
+        },
+        {
+            "column": "theme_B_score",
+            "name_kr": "테마 B 점수",
+            "group": "테마",
+            "definition": "male_solo·housv·other50 z-score 평균",
+            "unit": "z",
+        },
+        {
+            "column": "theme_B_pct",
+            "name_kr": "테마 B 백분위",
+            "group": "테마",
+            "definition": "지역 내 백분위, 보류 제외. 높을수록 중장년 독거·주거취약 위험",
+            "unit": "0~100",
+        },
+        {
+            "column": "score",
+            "name_kr": "종합 점수",
+            "group": "종합",
+            "definition": "(theme_A_pct + theme_B_pct)/2. 평균 유지로 합의(이슈 #24)",
+            "unit": "0~100",
+        },
+        {
+            "column": "pctile",
+            "name_kr": "종합 백분위",
+            "group": "종합",
+            "definition": "score 의 지역 내 백분위",
+            "unit": "0~100",
+        },
+        {
+            "column": "grade",
+            "name_kr": "최종 등급",
+            "group": "종합",
+            "definition": "pctile 5분위. 5 = 상위 20%. **0 = 보류(등급 미부여)** — 가장 안전한 등급이 아님",
+            "unit": "0~5",
+        },
+        {
+            "column": "type_label",
+            "name_kr": "유형 라벨",
+            "group": "유형",
+            "definition": '고령 독거형 / 중장년 독거형 / 복합형 / 일반 / 보류. "(혼합지)" 접미 = work_ratio 1~5. 임대단지는 rental_est 열로 분리(v3.2)',
+            "unit": "범주",
+        },
+        {
+            "column": "rental_est",
+            "name_kr": "고령 임대단지 추정",
+            "group": "유형",
+            "definition": '서명 규칙 p_1in≥0.55 & old≥0.40 & p_apt≥0.90. LH·SH 단지 자료로 확인한 것이 아닌 추정값 → 에이전트 설명에 "임대단지 추정"으로 표기',
+            "unit": "T/F",
+        },
+        {
+            "column": "hold",
+            "name_kr": "보류 여부",
+            "group": "플래그",
+            "definition": "True면 등급 미부여 (grade=0)",
+            "unit": "T/F",
+        },
+        {
+            "column": "hold_reason",
+            "name_kr": "보류 사유",
+            "group": "플래그",
+            "definition": "업무지(work_ratio>5) / 집단가구(pop_per_hh>5) / 거주없음(인구·일반가구·총거처 중 하나라도 0 이하; 결측 0 대치 후 판정) / 빈값. 거주없음 중 인구 양수 5행이 있어 명칭 해석 주의",
+            "unit": "범주",
+        },
+        {
+            "column": "mixed",
+            "name_kr": "혼합지 여부",
+            "group": "플래그",
+            "definition": "1 < work_ratio ≤ 5. 등급은 유지",
+            "unit": "T/F",
+        },
+        {
+            "column": "work_ratio",
+            "name_kr": "종사자/거주자",
+            "group": "플래그 입력",
+            "definition": "SGIS2024_to_em_020 / 총인구",
+            "unit": "배",
+        },
+        {
+            "column": "pop_per_hh",
+            "name_kr": "가구당 인구",
+            "group": "플래그 입력",
+            "definition": "총인구 / 총가구",
+            "unit": "명",
+        },
+        {
+            "column": "p_1in",
+            "name_kr": "1인가구율",
+            "group": "기초 비율",
+            "definition": "1인가구 / 총가구",
+            "unit": "0~1",
+        },
+        {
+            "column": "p_50",
+            "name_kr": "50세+ 비율",
+            "group": "기초 비율",
+            "definition": "(50~64세 구간합 + 65세+ 역산) / 총인구",
+            "unit": "0~1",
+        },
+        {
+            "column": "p_apt",
+            "name_kr": "아파트 비율",
+            "group": "기초 비율",
+            "definition": "SGIS2024_ho_gb_003 / 총주택. 총주택 0이면 0으로 처리하는 모델 규약. 임대단지 추정 서명용",
+            "unit": "0~1",
+        },
+        {
+            "column": "p_other",
+            "name_kr": "주택이외 거처 비율",
+            "group": "기초 비율",
+            "definition": "SGIS2024_ho_gb_006 / (총주택 + 주택이외 거처). 고시원·오피스텔 포함",
+            "unit": "0~1",
+        },
+        {
+            "column": "solo50",
+            "name_kr": "중장년·고령 독거 추정",
+            "group": "테마 A 차원",
+            "definition": "p_1in × p_50 (1인가구×연령 교차표 대용)",
+            "unit": "0~1",
+        },
+        {
+            "column": "old",
+            "name_kr": "65세+ 비율",
+            "group": "테마 A 차원",
+            "definition": "노년부양비·노령화지수가 모두 양수이면 1/(1+100/노년부양비+100/노령화지수), 그 외 0. 노령화지수 0·고령 인구 양수 사례는 남은 오류(docs 참조)",
+            "unit": "0~1",
+        },
+        {
+            "column": "oldho",
+            "name_kr": "노후 비아파트",
+            "group": "테마 A 차원",
+            "definition": "(1979년 이전 + 1980년대)/총주택 × (단독+다세대+연립)/총주택. 총주택 0이면 0으로 처리하는 모델 규약; 실제 교차 주택수 직접 관측 아님",
+            "unit": "0~1",
+        },
+        {
+            "column": "male_solo",
+            "name_kr": "중장년 남성 독거 추정",
+            "group": "테마 B 차원",
+            "definition": "50~64세 남성/총인구 × p_1in",
+            "unit": "0~1",
+        },
+        {
+            "column": "housv",
+            "name_kr": "주거취약",
+            "group": "테마 B 차원",
+            "definition": "(비주거용 건물내 주택 + 20㎡ 이하)/(총주택 + 주택이외 거처)",
+            "unit": "0~1",
+        },
+        {
+            "column": "other50",
+            "name_kr": "고시원 대리",
+            "group": "테마 B 차원",
+            "definition": "p_other × p_50. 오피스텔=청년, 고시원=중장년 가정. 고시원 현황 확보 시 교체",
+            "unit": "0~1",
+        },
+        {
+            "column": "z_solo50",
+            "name_kr": "중장년·고령 독거 추정 z",
+            "group": "z-score",
+            "definition": "solo50 의 지역 내 표준화, ±3 절단",
+            "unit": "z",
+        },
+        {
+            "column": "z_old",
+            "name_kr": "65세+ 비율 z",
+            "group": "z-score",
+            "definition": "old 의 지역 내 표준화, ±3 절단",
+            "unit": "z",
+        },
+        {
+            "column": "z_oldho",
+            "name_kr": "노후 비아파트 z",
+            "group": "z-score",
+            "definition": "oldho 의 지역 내 표준화, ±3 절단",
+            "unit": "z",
+        },
+        {
+            "column": "z_male_solo",
+            "name_kr": "중장년 남성 독거 추정 z",
+            "group": "z-score",
+            "definition": "male_solo 의 지역 내 표준화, ±3 절단",
+            "unit": "z",
+        },
+        {
+            "column": "z_housv",
+            "name_kr": "주거취약 z",
+            "group": "z-score",
+            "definition": "housv 의 지역 내 표준화, ±3 절단",
+            "unit": "z",
+        },
+        {
+            "column": "z_other50",
+            "name_kr": "고시원 대리 z",
+            "group": "z-score",
+            "definition": "other50 의 지역 내 표준화, ±3 절단",
+            "unit": "z",
+        },
+    ]
+    values = frame.reset_index()
+    rows = []
+    for definition in definitions:
+        name = definition["column"]
+        series = values[name]
+        row = dict(definition)
+        row["dtype"] = str(series.dtype)
+        row["n_missing"] = int(series.isna().sum())
+        if name in {"TOT_OA_CD", "ADM_CD"}:
+            row["summary"] = f"고유값 {series.nunique()}"
+        elif pd.api.types.is_numeric_dtype(series) and not pd.api.types.is_bool_dtype(series):
+            observed = series.dropna()
+            row["summary"] = (
+                f"평균 {observed.mean():.3f} / 중앙 {observed.median():.3f} / "
+                f"최소 {observed.min():.3f} / 최대 {observed.max():.3f}"
+                if len(observed)
+                else "모두 결측"
+            )
+        else:
+            row["summary"] = ", ".join(
+                f"{key}:{count}"
+                for key, count in series.fillna("")
+                .astype(str)
+                .replace("", "(빈값)")
+                .value_counts()
+                .items()
+            )
+        rows.append(row)
+    pd.DataFrame(rows)[
+        ["column", "name_kr", "group", "definition", "unit", "dtype", "n_missing", "summary"]
+    ].to_csv(OUT_DICTIONARY, index=False, encoding="utf-8-sig")
 
 
 def main() -> None:
@@ -50,13 +335,19 @@ def main() -> None:
     sg = [c for c in one.columns if c.startswith(S)]
     print("집계구", len(one), "| SGIS 변수", len(sg))
 
+    # ## 2. 차원·테마·등급 계산
+
     def build(impute=IMPUTE, strat=STRATIFY, clip=CLIP_Z, themes=THEMES):
         d = one.copy()
         d[sg] = d[sg].fillna(impute)
         pop, hh, ho = d[S + "to_in_001"], d[S + "to_ga_001"], d[S + "to_ho_001"]
-        valid = (pop > 0) & (hh > 0) & (ho > 0)
-        d = d[valid].copy()
-        pop, hh, ho = pop[valid], hh[valid], ho[valid]
+        dwell_all = ho + d[S + "ho_gb_006"]  # 총거처 = 주택 + 주택이외 거처(오피스텔·고시원)
+        d["resident"] = (
+            (pop > 0) & (hh > 0) & (dwell_all > 0)
+        )  # ※ 총주택>0 조건은 오피스텔·고시원 전용 집계구를 잘못 제외함
+        excluded = d[~d.resident].copy()
+        d = d[d.resident].copy()
+        pop, hh, ho = pop[d.index], hh[d.index], ho[d.index]
 
         def age(ids):
             return d[[f"{S}in_age_{i:03d}" for i in ids]].sum(axis=1)
@@ -72,16 +363,19 @@ def main() -> None:
         )
         p50 = age([11, 12, 13]) / pop + p65
         dwell = ho + d[S + "ho_gb_006"]
-        nonapt = (d[S + "ho_gb_001"] + d[S + "ho_gb_002"] + d[S + "ho_gb_004"]) / ho
+        ho_safe = ho.replace(0, np.nan)  # 주택 0인 집계구: 주택 기반 비율은 0
+        nonapt = ((d[S + "ho_gb_001"] + d[S + "ho_gb_002"] + d[S + "ho_gb_004"]) / ho_safe).fillna(
+            0
+        )
 
         d["p_1in"] = d[S + "ga_sd_005"] / hh
         d["p_50"] = p50
-        d["p_apt"] = d[S + "ho_gb_003"] / ho
+        d["p_apt"] = (d[S + "ho_gb_003"] / ho_safe).fillna(0)
         d["p_other"] = d[S + "ho_gb_006"] / dwell
         # 테마 A
         d["solo50"] = d.p_1in * p50
         d["old"] = p65
-        d["oldho"] = (d[S + "ho_yr_001"] + d[S + "ho_yr_002"]) / ho * nonapt
+        d["oldho"] = ((d[S + "ho_yr_001"] + d[S + "ho_yr_002"]) / ho_safe).fillna(0) * nonapt
         # 테마 B
         d["male_solo"] = age([41, 42, 43]) / pop * d.p_1in
         d["housv"] = (d[S + "ho_gb_005"] + d[S + "ho_ar_001"]) / dwell
@@ -110,7 +404,8 @@ def main() -> None:
             d[f"theme_{t}_pct"] = (
                 s.groupby(d.loc[ok, strat]).rank(pct=True) if strat else s.rank(pct=True)
             ) * 100
-        d["score"] = d[[f"theme_{t}_pct" for t in themes]].mean(axis=1)
+        tp = d[[f"theme_{t}_pct" for t in themes]]
+        d["score"] = tp.max(axis=1) if AGG == "max" else tp.mean(axis=1)
         s = d.loc[ok, "score"]
         d["pctile"] = (
             s.groupby(d.loc[ok, strat]).rank(pct=True) if strat else s.rank(pct=True)
@@ -125,34 +420,48 @@ def main() -> None:
         # 유형 라벨
         topA = d["theme_A_pct"] >= TOP * 100 if "A" in themes else pd.Series(False, index=d.index)
         topB = d["theme_B_pct"] >= TOP * 100 if "B" in themes else pd.Series(False, index=d.index)
-        rental = (
+        d["rental_est"] = (
             (d.p_1in >= RENTAL_SIG["p_1in"])
             & (d.old >= RENTAL_SIG["old"])
             & (d.p_apt >= RENTAL_SIG["p_apt"])
-        )
+        )  # 임대단지 추정 (서명 규칙, LH·SH 미확인)
         d["type_label"] = np.select(
-            [d.hold, rental, topA & topB, topA, topB],
-            ["보류", "고령 임대단지형", "복합형", "고령 독거형", "중장년 독거형"],
+            [d.hold, topA & topB, topA, topB],
+            ["보류", "복합형", "고령 독거형", "중장년 독거형"],
             "일반",
         )
         d.loc[d.mixed & ~d.hold, "type_label"] += "(혼합지)"
+        # 평가 조건 미충족 행도 유지. 기존 사유명 '거주없음'에는 인구 양수 행도 포함됨(docs 참조).
+        excluded["hold"] = True
+        excluded["hold_reason"] = "거주없음"
+        excluded["mixed"] = False
+        excluded["grade"] = 0
+        excluded["type_label"] = "보류"
+        excluded["rental_est"] = False
+        d = pd.concat([d, excluded], axis=0).reindex(one.index)
+        d["REGION"] = one["REGION"]
+        d["ADM_CD"] = one["ADM_CD"]
         return d
 
     base = build()
     print(
-        "포함",
+        "집계구",
         len(base),
         "| 보류",
-        base.hold.sum(),
+        int(base.hold.sum()),
         base.hold_reason[base.hold].value_counts().to_dict(),
         "| 혼합지",
-        base.mixed.sum(),
+        int(base.mixed.sum()),
     )
+
+    # ## 3. 결과
 
     print("[지역 × 등급, 0 = 보류]")
     print(pd.crosstab(base.REGION, base.grade))
     print("[지역 × 유형]")
     print(pd.crosstab(base.REGION, base.type_label))
+    print("[임대단지 추정 × 유형]")
+    print(pd.crosstab(base.rental_est, base.type_label))
     print("[테마 상위 20% 겹침]")
     print(
         pd.crosstab(
@@ -162,7 +471,9 @@ def main() -> None:
     print(
         "테마 A·B 점수 Spearman:",
         round(
-            base[~base.hold].theme_A_score.corr(base[~base.hold].theme_B_score, method="spearman"),
+            base[~base.hold.astype(bool)].theme_A_score.corr(
+                base[~base.hold.astype(bool)].theme_B_score, method="spearman"
+            ),
             3,
         ),
     )
@@ -187,7 +498,9 @@ def main() -> None:
             .round(2)
         )
 
-    ok = ~base.hold
+    # ## 4. 차원 기여도·민감도
+
+    ok = ~base.hold.astype(bool)
     g5 = base.grade == 5
     z = base.loc[ok, ["z_" + k for k in DIMS]].copy()
     z.columns = DIMS
@@ -238,6 +551,7 @@ def main() -> None:
             "pctile",
             "grade",
             "type_label",
+            "rental_est",
             "hold",
             "hold_reason",
             "mixed",
@@ -253,105 +567,13 @@ def main() -> None:
     )
     OUT.parent.mkdir(parents=True, exist_ok=True)
     out[cols].to_csv(OUT, encoding="utf-8-sig", index_label="TOT_OA_CD")
-    strcols = {"REGION", "ADM_CD", "type_label", "hold", "hold_reason", "mixed"}
+    strcols = {"REGION", "ADM_CD", "type_label", "rental_est", "hold", "hold_reason", "mixed"}
     types = ['"String"'] + [
         '"String"' if c in strcols else '"Integer"' if c == "grade" else '"Real"' for c in cols
     ]
     OUT_TYPES.write_text(",".join(types) + "\n", encoding="utf-8")
+    write_dictionary(out[cols])
     print("saved:", OUT.relative_to(ROOT), "| rows/columns:", len(out), len(cols) + 1)
-
-    # 원본 35개 열의 설명을 공통 공유 규칙에 맞춰 함께 저장한다.
-    column_info = {
-        "TOT_OA_CD": ("SGIS 집계구 코드", "string", "14자리 문자열"),
-        "REGION": ("지역 이름; 현재 제공 결과는 강남구·춘천시", "string", "시군구 구분"),
-        "ADM_CD": ("SGIS 행정동 코드; 행안부 코드와 구분", "string", "8자리 문자열"),
-        "pop_total": ("총인구", "number", "명"),
-        "hh_total": ("일반가구 수; 행정동 집계 가중치 후보", "number", "가구"),
-        "hh_single": ("1인가구 수", "number", "가구"),
-        "score": ("보류 제외 테마 백분위의 평균", "number", "0~100"),
-        "pctile": ("종합 점수의 지역 내 백분위", "number", "0 초과 100 이하; 보류는 결측"),
-        "grade": ("지역 내 상대 등급; 0은 보류", "integer", "0 또는 1~5"),
-        "type_label": (
-            "원본 v3의 복합 유형 라벨; 임대단지형은 확인 전 후보",
-            "string",
-            "보류/일반/고령 독거형/중장년 독거형/복합형/고령 임대단지형; 혼합지 접미 가능",
-        ),
-        "hold": ("종사자비 또는 인구/가구 비율 기준의 보류 여부", "boolean", "True/False"),
-        "hold_reason": (
-            "원본 v3 보류 사유; 두 조건 동시 충족 시 업무지 우선",
-            "string",
-            "업무지/집단가구; 비보류는 공란",
-        ),
-        "mixed": ("비보류 중 종사자/거주자 > WORK_MIXED", "boolean", "True/False"),
-        "work_ratio": ("종사자 수 / 총인구", "number", "배"),
-        "pop_per_hh": ("총인구 / 일반가구 수", "number", "명/가구"),
-        "p_1in": ("1인가구 수 / 일반가구 수", "number", "비율"),
-        "p_50": ("50~64세 비율과 역산 65세 이상 비율의 합", "number", "추정 비율"),
-        "p_apt": ("아파트 수 / 총주택 수", "number", "비율"),
-        "p_other": ("주택이외 거처 / 총거처", "number", "비율"),
-        "solo50": (
-            "1인가구율 × 50세 이상 비율; 교차 가구수 직접 관측 아님",
-            "number",
-            "지역 대리지표",
-        ),
-        "old": ("노년부양비·노령화지수로 역산한 65세 이상 비율", "number", "추정 비율"),
-        "oldho": (
-            "1989년 이전 주택 비율 × 비아파트 비율; 실제 교차 주택수 아님",
-            "number",
-            "지역 대리지표",
-        ),
-        "male_solo": (
-            "50~64세 남성 비율 × 1인가구율; 실제 남성 독거 교차 인구 아님",
-            "number",
-            "지역 대리지표",
-        ),
-        "housv": (
-            "비주거용 건물내 주택과 20m2 이하 주택 합 / 총거처",
-            "number",
-            "비율; 분자 중복 가능",
-        ),
-        "other50": (
-            "주택이외 거처 비율 × 50세 이상 비율; 고시원 직접 관측 아님",
-            "number",
-            "지역 대리지표",
-        ),
-    }
-    for theme in THEMES:
-        column_info[f"theme_{theme}_score"] = (
-            f"테마 {theme}의 차원별 z 평균",
-            "number",
-            "표준화 점수",
-        )
-        column_info[f"theme_{theme}_pct"] = (
-            f"보류를 제외한 테마 {theme} 지역 내 백분위",
-            "number",
-            "0 초과 100 이하; 보류는 결측",
-        )
-    for dim in DIMS:
-        column_info[f"z_{dim}"] = (
-            f"{dim} 지역 내 표준화 후 절단; 표준화에는 보류 행도 포함",
-            "number",
-            f"-{CLIP_Z}~{CLIP_Z}",
-        )
-    dictionary_rows = []
-    for name in ["TOT_OA_CD", *cols]:
-        description, data_type, unit = column_info[name]
-        missing = "원본 v3의 결측 대치·필터 이후 값; 계산 불가 결측을 위험 없음으로 해석하지 않음"
-        if name in {"theme_A_pct", "theme_B_pct", "score", "pctile"}:
-            missing = "보류 행 또는 계산 불가; 0점·안전과 구분"
-        elif name == "hold_reason":
-            missing = "비보류이면 공란; hold와 함께 읽음"
-        dictionary_rows.append(
-            {
-                "COLUMN_NAME": name,
-                "DESCRIPTION": description,
-                "DATA_TYPE": data_type,
-                "UNIT_OR_RANGE": unit,
-                "MISSING_MEANING": missing,
-            }
-        )
-    pd.DataFrame(dictionary_rows).to_csv(OUT_DICTIONARY, index=False, encoding="utf-8-sig")
-    print("QGIS types:", OUT_TYPES.relative_to(ROOT))
     print("dictionary:", OUT_DICTIONARY.relative_to(ROOT))
 
 
