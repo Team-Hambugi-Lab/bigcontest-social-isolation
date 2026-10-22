@@ -23,16 +23,13 @@ from scipy import stats
 
 from src.data import paths
 
+# 서울시 7자리 → SGIS 8자리 코드 변환은 #16 외부검증과 같은 규칙을 쓴다(근거: external.DONG_CODE_FIX)
+from src.evaluation.h4_external_validation import CODE_EXCEPTIONS, to_sgis_code
+
 GANGNAM = "강남구"
 GANGNAM_SGG = "11230"
 N_DONGS = 22
 
-# 서울시 7자리 행정동 코드 → SGIS 8자리. 기본은 끝에 0을 붙인다(h4_external_validation과 같은 방식).
-# 일원2동(1123074)이 개포3동(11230511)으로 이름만 바뀐 것이다. 강남구청이 행정동 명칭만 바꾸고 법정동은
-# 유지한다고 안내했고, 통신 20세 이상 인구 / SGIS 총인구가 0.857로 다른 21개 동 범위
-# (0.73~1.34) 안에 있다. 서울시 자료는 개칭 전 코드를 계속 쓴다.
-# TODO: #16 머지 후 h4_external_validation.CODE_EXCEPTIONS와 하나로 합친다.
-CODE_EXCEPTIONS = {"1123074": "11230511"}
 N_SEX = 2
 N_AGE_GROUPS = 12
 MALE = 1
@@ -181,12 +178,6 @@ def target_ratios(df: pd.DataFrame) -> pd.DataFrame:
         mean = monthly.groupby("dong_cd")[list(DENOMINATORS)].mean()
         cols.append(mean.add_suffix(f"_{target}"))
     return names.join(cols).reset_index().sort_values("dong_cd", ignore_index=True)
-
-
-def to_sgis_code(code7: pd.Series) -> pd.Series:
-    """서울시 7자리 행정동 코드를 SGIS 8자리로 바꾼다."""
-    code7 = code7.astype(str)
-    return code7.map(CODE_EXCEPTIONS).fillna(code7 + "0")
 
 
 def read_dbf(path: Path, encoding: str = "utf-8") -> pd.DataFrame:
