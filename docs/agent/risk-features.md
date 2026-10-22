@@ -3,8 +3,8 @@
 에이전트의 1 분류(특징 코드 부여)와 4 추천(기관 태그 매칭), 지역 지수 차원(#13)이 같은 어휘를 쓰도록 만든 위험 특징 사전의 근거를 정리한다. 사전은 점수를 내는 지수가 아니라 **가중치 없는 분류표**다. 특징마다 해당 여부만 판정한다.
 
 - 최종 사전: `data/processed/risk_feature_dictionary.csv` (청년·고령 병합 후)
-- 청년 작업본(A-1): `data/interim/risk_features_youth.csv`(근거 수치), `data/interim/risk_feature_dictionary_youth.csv`(사전 청년 행)
-- 고령·중장년 작업본(A-2): `data/interim/risk_features_senior.csv`(특징 12개), `data/interim/risk_features_senior_evidence.csv`(근거 수치), `data/interim/proposed_senior_features.csv`(신규 코드 후보 3개)
+- 청년 작업본(A-1): [`data/interim/risk_features_youth.csv`](https://drive.google.com/file/d/1x3dQp3So3m9el33gPcz1Z6yZXJmdTeV_/view)(근거 수치), [`data/interim/risk_feature_dictionary_youth.csv`](https://drive.google.com/file/d/1X9XWkXRkms5QiQv5JtNq3yEK68En0lAY/view)(사전 청년 행)
+- 고령·중장년 작업본(A-2): [`data/interim/risk_features_senior.csv`](https://drive.google.com/file/d/1fHzqntTdQbKEOUZuBXMPXF9c09FU9f2-/view)(특징 12개), [`data/interim/risk_features_senior_evidence.csv`](https://drive.google.com/file/d/1noUpUJ_M_xFz_oQVDEHneDbHOHK_weMs/view)(근거 수치), [`data/interim/proposed_senior_features.csv`](https://drive.google.com/file/d/1NsrkS4ZbUdGwWMxYeoV3nEhiZR_L35r_/view)(신규 코드 후보 3개). 전체 목록은 아래 "고령·중장년 근거 (A-2)" 표
 - 생성 코드: `uv run python -m src.features.risk_features_youth`
 
 ## 공통 결정 (2026-10-20 확정, #17 코멘트)
@@ -100,7 +100,16 @@
 
 ## 고령·중장년 근거 (A-2)
 
-작성: 재언(A-2 브랜치 `3d81cc7`). 아래 `data/interim/` CSV는 드라이브 `data/interim/`에, 공식 PDF 5개와 출처 목록은 드라이브 `data/raw/reference_data/고령_중장년_근거자료/`에 있다(2026-10-22 확인).
+작성: 재언(A-2 브랜치 `3d81cc7`). 아래 `data/interim/` CSV는 드라이브 `data/interim/`에, 공식 PDF 5개와 출처 목록은 드라이브 [`data/raw/reference_data/고령_중장년_근거자료/`](https://drive.google.com/drive/folders/1LKPjr8rABJeEHP2RkBACUluz16Xyyysx)에 있다(2026-10-22 확인).
+
+| 파일 | 행 × 열 | 열 설명 |
+|---|---|---|
+| [`risk_features_senior.csv`](https://drive.google.com/file/d/1fHzqntTdQbKEOUZuBXMPXF9c09FU9f2-/view) | 12 × 12 | [dictionary](https://drive.google.com/file/d/1_R24umE4nAhYIPBLdoajXv51d-6MuvTm/view) |
+| [`risk_features_senior_evidence.csv`](https://drive.google.com/file/d/1noUpUJ_M_xFz_oQVDEHneDbHOHK_weMs/view) | 22 × 12 | [dictionary](https://drive.google.com/file/d/1Uc8pmIAh1QZY46sRZqG3zj_uuSDUWGis/view) |
+| [`proposed_senior_features.csv`](https://drive.google.com/file/d/1NsrkS4ZbUdGwWMxYeoV3nEhiZR_L35r_/view) | 3 × 7 | [dictionary](https://drive.google.com/file/d/1rs5lsm-m2lXpQ-rImibX2ayNRskkAcXc/view) |
+| [`feature_tag_mapping_a2_draft.csv`](https://drive.google.com/file/d/1RkChF4dupZ1CXIyeXwXX0YBzy8jOkT1V/view) | 39 × 4 | [dictionary](https://drive.google.com/file/d/1J2gypLSn2D66Zo9-pjHtiRDunmc1qe2P/view) |
+| [`regional_feature_linkage.csv`](https://drive.google.com/file/d/1bzmSoA8HuHGuCYg-1x3Smm5jnzDGtRTp/view) | 7 × 6 | [dictionary](https://drive.google.com/file/d/1cS0ZTrUdJWMAJiamq70R0xJNF_TsxLvU/view) |
+| [`feature_merge_review.csv`](https://drive.google.com/file/d/1tqqltOx-DZgLdjOiemjBbF_cvYKwARgy/view) | 12 × 8 | [dictionary](https://drive.google.com/file/d/12v7cT-FXiZkzMQeSvfmqYhiE_AT698Wb/view) |
 
 전체 검토 기록: [A-2 검토 보고서](../../reports/261020_issue17_a2_review.md).
 
