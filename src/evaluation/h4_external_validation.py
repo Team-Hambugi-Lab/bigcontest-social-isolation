@@ -19,10 +19,10 @@ OUTPUT_PATH = paths.INTERIM_DIR / "h4_external_validation.csv"
 GANGNAM_PREFIX = "11230"
 
 # 서울시 7자리 행정동 코드 → SGIS 8자리. 기본은 끝에 0을 붙인다.
-# 일원2동(1123074)은 SGIS 2025 경계에 없고 같은 자리에 개포3동(11230511)이 있다.
-# 이름이 바뀐 것으로 보이나 공식 자료로 확인하지 못했다(추정 대응, 제외 버전도 함께 낸다).
+# 일원2동(1123074)이 개포3동(11230511)으로 이름만 바뀐 것이다. 강남구청이 행정동 명칭만
+# 바꾸고 법정동은 유지한다고 안내했고, 통신 20세 이상 인구 / SGIS 총인구가 0.857로 다른
+# 21개 동 범위(0.73~1.34) 안에 있다(#25). 서울시 자료는 개칭 전 코드를 계속 쓴다.
 CODE_EXCEPTIONS = {"1123074": "11230511"}
-UNVERIFIED_ADM = frozenset(CODE_EXCEPTIONS.values())
 
 # 서울 자료는 5세 연령대(20~75). SK 연령대에 맞춘다.
 AGE_MAP = {
@@ -81,34 +81,29 @@ def dong_metrics(telecom: pd.DataFrame) -> pd.DataFrame:
 
 
 def correlate(signal_dong: pd.DataFrame, metrics: pd.DataFrame) -> pd.DataFrame:
-    """연령대 × 지표마다 Spearman 상관과 기대 부호 일치 여부를 낸다(전체·추정 대응 동 제외)."""
+    """연령대 × 지표마다 Spearman 상관과 기대 부호 일치 여부를 낸다."""
     joined = signal_dong.merge(metrics, on=["ADM_CD", "AGE_BAND"], how="inner")
     rows = []
-    for scope, data in (
-        ("all", joined),
-        ("exclude_unverified", joined[~joined["ADM_CD"].isin(UNVERIFIED_ADM)]),
-    ):
-        for band, d in data.groupby("AGE_BAND"):
-            for metric, (sign_rate, sign_pooled) in EXPECTED_SIGN.items():
-                for target, sign in (
-                    ("SIGNAL_RATE", sign_rate),
-                    ("DONG_POOLED_RESID", sign_pooled),
-                ):
-                    ok = d[[target, metric]].dropna()
-                    rho, p = stats.spearmanr(ok[target], ok[metric])
-                    rows.append(
-                        {
-                            "SCOPE": scope,
-                            "AGE_BAND": band,
-                            "TARGET": target,
-                            "METRIC": metric,
-                            "N_DONG": len(ok),
-                            "SPEARMAN": rho,
-                            "P_VALUE": p,
-                            "EXPECTED_SIGN": sign,
-                            "SIGN_MATCH": bool(rho * sign > 0),
-                        }
-                    )
+    for band, d in joined.groupby("AGE_BAND"):
+        for metric, (sign_rate, sign_pooled) in EXPECTED_SIGN.items():
+            for target, sign in (
+                ("SIGNAL_RATE", sign_rate),
+                ("DONG_POOLED_RESID", sign_pooled),
+            ):
+                ok = d[[target, metric]].dropna()
+                rho, p = stats.spearmanr(ok[target], ok[metric])
+                rows.append(
+                    {
+                        "AGE_BAND": band,
+                        "TARGET": target,
+                        "METRIC": metric,
+                        "N_DONG": len(ok),
+                        "SPEARMAN": rho,
+                        "P_VALUE": p,
+                        "EXPECTED_SIGN": sign,
+                        "SIGN_MATCH": bool(rho * sign > 0),
+                    }
+                )
     return pd.DataFrame(rows)
 
 

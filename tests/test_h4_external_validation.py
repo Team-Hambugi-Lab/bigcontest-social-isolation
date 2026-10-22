@@ -41,7 +41,7 @@ def test_correlate_flags_expected_sign():
         MOVES_HOLIDAY=[5, 4, 3, 2, 1],
     )
     out = ev.correlate(signal, metrics)
-    assert out.loc[out["SCOPE"] == "all", "SIGN_MATCH"].all()
+    assert out["SIGN_MATCH"].all()
 
 
 @pytest.mark.requires_data
