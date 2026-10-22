@@ -49,9 +49,9 @@ MOHW_FEATURES = [
      {"q135": OFTEN, "q136": OFTEN}),
     ("MIND_SOCIAL_ANXIETY", "대인 불안", "대인 두려움·불안·평가 걱정 중 하나라도 자주 이상", "any",
      {"q132": OFTEN, "q133": OFTEN, "q134": OFTEN}),
-    ("MIND_SUICIDE_IDEA", "자살 생각", "죽고 싶다고 생각한 적 있음(평생)", "any", {"q14": [1]}),
+    ("MIND_SUICIDE_IDEA", "최근 자살·자해 생각", "죽고 싶다고 생각한 적 있음(평생)", "any", {"q14": [1]}),
     # q14a1은 q14=1에게만 물으므로 q14(해당 보기 없음)를 넣어 분모를 q14 응답자로 둔다.
-    ("MIND_SUICIDE_ATTEMPT", "자살 시도", "자살을 시도한 적 있음(평생)", "any",
+    ("MIND_SUICIDE_ATTEMPT", "최근 자살 시도·자해 행동", "자살을 시도한 적 있음(평생)", "any",
      {"q14a1": [1], "q14": []}),
     ("ECON_NO_INCOME", "소득 활동 없음", "지난주 돈 버는 일 안 함", "any", {"hq10": [2]}),
     ("ECON_LOW_STATUS", "낮은 경제 수준", "가정 또는 본인 사회경제적 수준 하", "any",
