@@ -12,6 +12,7 @@ import pandas as pd
 from scipy import stats
 
 from src.data import paths
+from src.data.external import DONG_CODE_FIX
 
 TELECOM_DIR = paths.RAW_DIR / "reference_data" / "서울_29개_통신정보"
 SIGNAL_DONG_PATH = paths.PROCESSED_DIR / "h4_signal_dong.csv"
@@ -19,10 +20,9 @@ OUTPUT_PATH = paths.INTERIM_DIR / "h4_external_validation.csv"
 GANGNAM_PREFIX = "11230"
 
 # 서울시 7자리 행정동 코드 → SGIS 8자리. 기본은 끝에 0을 붙인다.
-# 일원2동(1123074)이 개포3동(11230511)으로 이름만 바뀐 것이다. 강남구청이 행정동 명칭만
-# 바꾸고 법정동은 유지한다고 안내했고, 통신 20세 이상 인구 / SGIS 총인구가 0.857로 다른
-# 21개 동 범위(0.73~1.34) 안에 있다(#25). 서울시 자료는 개칭 전 코드를 계속 쓴다.
-CODE_EXCEPTIONS = {"1123074": "11230511"}
+# 서울시 자료는 SK와 같은 개칭 전 코드를 쓰므로 DONG_CODE_FIX(SGIS → SK)를 뒤집어 쓴다.
+# 개칭 근거는 src/data/external.py 주석에 있다.
+CODE_EXCEPTIONS = {sk[:-1]: sgis for sgis, sk in DONG_CODE_FIX.items()}
 
 # 서울 자료는 5세 연령대(20~75). SK 연령대에 맞춘다.
 AGE_MAP = {
