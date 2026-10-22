@@ -124,9 +124,10 @@ DEFINITIONS = {
     "HOUSE_UNSTABLE": "고시원이나 보증금 없는 월세처럼 주거가 불안정하다",
 }
 NO_DETECT = ("감지 불가", "지역 데이터로 감지할 수 없음, 대화(체크인)로 확인")
-SK_DETECT = (
-    "SK",
-    "20·30대 유동이 기대보다 낮은 달이 이어짐, 20·30대 신호의 의미는 #16에서 확인 필요",
+# #16 외부 검증에서 20·30대 활동 저하 신호는 반대 방향이라 고령층(60대 이상)에만 쓴다.
+SK_YOUTH_RULE = (
+    "#16 외부 검증에서 20·30대 유동 신호는 반대 방향(신호가 많은 동일수록 더 많이 이동)이라 "
+    "쓰지 않음, 대화(체크인)로 확인"
 )
 CARD_DETECT = ("신한카드", "거주지 20·30대 집단의 소비가 낮거나 줄어듦, 강남구·춘천만 해당")
 # SGIS 지수 v3.2(#24)는 50세 이상 비율을 곱해 청년 오피스텔을 빼므로 청년에게는 지역 신호가 없다.
@@ -136,8 +137,8 @@ SGIS_YOUTH_RULE = (
 DETECT = {
     "SOLO_LIVING": ("SGIS", SGIS_YOUTH_RULE),
     "HOUSE_UNSTABLE": ("SGIS", SGIS_YOUTH_RULE),
-    "OUT_LONG_DURATION": SK_DETECT,
-    "OUT_NO_ACTIVITY": SK_DETECT,
+    "OUT_LONG_DURATION": (NO_DETECT[0], SK_YOUTH_RULE),
+    "OUT_NO_ACTIVITY": ("SK", SK_YOUTH_RULE),  # 고령 지역 신호로만 쓴다
     "ECON_NO_INCOME": CARD_DETECT,
     "ECON_LOW_STATUS": CARD_DETECT,
 }  # fmt: skip
