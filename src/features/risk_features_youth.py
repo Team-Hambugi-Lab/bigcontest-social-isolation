@@ -129,11 +129,13 @@ SK_DETECT = (
     "20·30대 유동이 기대보다 낮은 달이 이어짐, 20·30대 신호의 의미는 #16에서 확인 필요",
 )
 CARD_DETECT = ("신한카드", "거주지 20·30대 집단의 소비가 낮거나 줄어듦, 강남구·춘천만 해당")
+# SGIS 지수 v3.2(#24)는 50세 이상 비율을 곱해 청년 오피스텔을 빼므로 청년에게는 지역 신호가 없다.
+SGIS_YOUTH_RULE = (
+    "v3.2 지수(#24)는 50세 이상 가중이라 청년은 지역 신호로 잡히지 않음, 대화(체크인)로 확인"
+)
 DETECT = {
-    "SOLO_LIVING": ("SGIS", "집계구 1인가구 비율(ga_sd_005 / to_ga_001)이 높음, 연령 구분 없음, "
-                    "기준값은 #13에서 정함"),
-    "HOUSE_UNSTABLE": ("SGIS", "집계구 월세·무상 가구 비율(ga_po)과 주택 이외의 거처 비율(ho_gb)이 "
-                       "높음, 기준값은 #13에서 정함"),
+    "SOLO_LIVING": ("SGIS", SGIS_YOUTH_RULE),
+    "HOUSE_UNSTABLE": ("SGIS", SGIS_YOUTH_RULE),
     "OUT_LONG_DURATION": SK_DETECT,
     "OUT_NO_ACTIVITY": SK_DETECT,
     "ECON_NO_INCOME": CARD_DETECT,

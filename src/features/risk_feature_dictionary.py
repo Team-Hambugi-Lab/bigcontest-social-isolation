@@ -24,6 +24,13 @@ PROPOSED_PATTERN = "A-2 제안 코드(10/22 채택), 고령 근거: {}"
 CONCAT_COLUMNS = ["EVIDENCE_SOURCE", "EVIDENCE_VALUE", "DETECT_RULE"]
 CRISIS_FLAG = {1: "Y", 0: "N"}  # A-2는 IS_CRISIS를 0/1로 적었다
 SOURCE_REF = re.compile(r"S\d+ pp?\.\S+")  # A-2 근거 문장의 "S1 p.14(PDF18)" 같은 출처
+# SGIS 지수 v3.2(#24)에서 이 특징에 쓰는 지표. 고령·중장년 감지 방법 끝에 붙인다.
+INDEX_RULES = {
+    "SOLO_LIVING": "지역 지수 v3.2(#24): 테마 A solo50(1인가구율×50세+ 비율), 테마 B male_solo"
+    "(50-64세 남성 비율×1인가구율) 백분위가 높음",
+    "HOUSE_UNSTABLE": "지역 지수 v3.2(#24): 테마 B housv(비주거용 건물 내 주택·20㎡ 이하 비율), "
+    "other50(주택 이외 거처 비율×50세+ 비율, 고시원 대리) 백분위가 높음",
+}
 
 
 def _labeled(youth: str, senior: str | None) -> str:
@@ -113,6 +120,9 @@ def merge_dictionary(
         row["AGE_PATTERN"] = _labeled(rates[code], sr["AGE_PATTERN"] if has_senior else NO_SENIOR)
         for col in CONCAT_COLUMNS:
             row[col] = _labeled(row[col], sr[col] if has_senior else None)
+        if code in INDEX_RULES:
+            senior_rule = f"{sr['DETECT_RULE']} " if has_senior else ""
+            row["DETECT_RULE"] = _labeled(rf.DETECT[code][1], senior_rule + INDEX_RULES[code])
         row["INSTITUTION_TAGS"] = pd.NA
         rows.append(row)
     merged = _insert_by_category(pd.DataFrame(rows), extra)

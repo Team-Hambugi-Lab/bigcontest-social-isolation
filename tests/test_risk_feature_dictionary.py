@@ -93,3 +93,11 @@ def test_proposed_rows_go_after_their_category_and_use_youth_evidence():
     assert b["AGE_PATTERN"].startswith("[청년] 청년 실태조사 근거 없음 [고령·중장년] A-2 제안 코드")
     assert b["IS_CRISIS"] == "N" and b["DETECT_DATA"] == "감지 불가"
     assert pd.isna(b["SUPPORT_NEED_PCT"])
+
+
+def test_index_rule_appends_to_senior_detect_rule(monkeypatch):
+    monkeypatch.setattr(rd, "INDEX_RULES", {"A_X": "idx", "B_Y": "idx2"})
+    monkeypatch.setattr(rd.rf, "DETECT", {"A_X": ("SGIS", "yr"), "B_Y": ("SGIS", "yr")})
+    out, _ = rd.merge_dictionary(_youth(), _senior(), RATES, NO_EXTRA)
+    assert out.loc[0, "DETECT_RULE"] == "[청년] yr [고령·중장년] sr idx"
+    assert out.loc[1, "DETECT_RULE"] == "[청년] yr [고령·중장년] idx2"
