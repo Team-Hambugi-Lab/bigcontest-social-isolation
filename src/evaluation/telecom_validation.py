@@ -27,10 +27,11 @@ N_DONGS = 22
 
 # 서울시 7자리 행정동 코드 → SGIS 8자리. 기본은 끝에 0을 붙인다(h4_external_validation과 같은 방식).
 # 일원2동(1123074)은 SGIS 2025 경계에 없고 같은 자리에 개포3동(11230511)이 있다.
-# 명칭 변경은 강남구청 안내로 확인했지만 공간 범위 동일성은 미확인이라 21개 동 결과도 함께 낸다.
+# 일원2동이 개포3동으로 이름만 바뀐 것이다. 강남구청이 행정동 명칭만 바꾸고 법정동은
+# 유지한다고 안내했고, 통신 20세 이상 인구 / SGIS 총인구가 0.857로 다른 21개 동 범위
+# (0.73~1.34) 안에 있다. 서울시 자료는 개칭 전 코드를 계속 쓴다.
 # TODO: #16 머지 후 h4_external_validation.CODE_EXCEPTIONS와 하나로 합친다.
 CODE_EXCEPTIONS = {"1123074": "11230511"}
-UNVERIFIED_ADM = frozenset(CODE_EXCEPTIONS.values())
 N_SEX = 2
 N_AGE_GROUPS = 12
 MALE = 1
