@@ -3,7 +3,7 @@
 에이전트의 1 분류(특징 코드 부여)와 4 추천(기관 태그 매칭), 지역 지수 차원(#13)이 같은 어휘를 쓰도록 만든 위험 특징 사전의 근거를 정리한다. 사전은 점수를 내는 지수가 아니라 **가중치 없는 분류표**다. 특징마다 해당 여부만 판정한다.
 
 - 최종 사전: `data/processed/risk_feature_dictionary.csv` (청년·고령 병합 후)
-- 청년 작업본(A-1): [`data/interim/risk_features_youth.csv`](https://drive.google.com/file/d/1Fe6K9Ji1uQv5SGo8YhVWF6oX6I6DI5pP/view)(근거 수치), [`data/interim/risk_feature_dictionary_youth.csv`](https://drive.google.com/file/d/1tTUEoqo6Xc5gM_wrrgdltQDPMwopO9zl/view)(사전 청년 행)
+- 청년 작업본(A-1): [`data/interim/risk_features_youth.csv`](https://drive.google.com/file/d/1Fe6K9Ji1uQv5SGo8YhVWF6oX6I6DI5pP/view)(근거 수치), [`data/interim/risk_feature_dictionary_youth.csv`](https://drive.google.com/file/d/1be8LRtr6TDmLR0SNzMOn1HPdUTEnzjJn/view)(사전 청년 행)
 - 고령·중장년 작업본(A-2): [`data/interim/risk_features_senior.csv`](https://drive.google.com/file/d/1fHzqntTdQbKEOUZuBXMPXF9c09FU9f2-/view)(특징 12개), [`data/interim/risk_features_senior_evidence.csv`](https://drive.google.com/file/d/1noUpUJ_M_xFz_oQVDEHneDbHOHK_weMs/view)(근거 수치), [`data/interim/proposed_senior_features.csv`](https://drive.google.com/file/d/1NsrkS4ZbUdGwWMxYeoV3nEhiZR_L35r_/view)(신규 코드 후보 3개). 전체 목록은 아래 "고령·중장년 근거 (A-2)" 표
 - 생성 코드: `uv run python -m src.features.risk_features_youth`
 
@@ -407,7 +407,7 @@ S2 p.10은 2023년 수급자 1,413명·41.4%를 함께 제시하지만, 1,413/3,
 
 ## 병합 사전 (`data/processed/risk_feature_dictionary.csv`)
 
-생성 코드: `uv run python -m src.features.risk_feature_dictionary`. 드라이브: [`risk_feature_dictionary.csv`](https://drive.google.com/file/d/1IDJcU31b8Xy_KA3LSq5oKKipKySa3ePz/view)(24 × 12), [열 설명](https://drive.google.com/file/d/1PE_mQqgme8y69Dlm5NmUGmazs_sgdrnN/view). 입력은 `data/interim/`의 `risk_feature_dictionary_youth.csv`, `risk_features_youth.csv`, `risk_features_senior.csv`다.
+생성 코드: `uv run python -m src.features.risk_feature_dictionary`. 드라이브: [`risk_feature_dictionary.csv`](https://drive.google.com/file/d/1BpBVgvxDBUqLKoplMIUzKXz87Hry894-/view)(24 × 12), [열 설명](https://drive.google.com/file/d/1PE_mQqgme8y69Dlm5NmUGmazs_sgdrnN/view). 입력은 `data/interim/`의 `risk_feature_dictionary_youth.csv`, `risk_features_youth.csv`, `risk_features_senior.csv`다.
 
 - **행:** 10/20에 확정한 21개 코드와 10/22에 채택한 A-2 제안 코드 3개, 모두 24행이다. 고령 12개는 모두 21개 코드 안에 있다. 연령별로 다른 점은 범주를 나누지 않고 `AGE_PATTERN`에 적는다.
 - **청년 값을 쓰는 열:** `FEATURE_NAME`, `DEFINITION`, `DETECT_DATA`, `IS_CRISIS`, `SUPPORT_TYPES`, `SUPPORT_NEED_PCT`. 정의는 10/20 확정본이고, `SUPPORT_NEED_PCT`는 실태조사 "매우 필요함" 비율이라 같은 문항이 없는 고령 지원 제안은 넣지 않는다(고령 제안은 `risk_features_senior.csv`).
