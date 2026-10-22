@@ -50,7 +50,7 @@
 
 | 특징 | 이름 | 보건복지부 문항 | 해당 기준 | 보건복지부 | 서울시 | 감지 데이터 | 위기 |
 |------|------|------|------|------|------|------|------|
-| `REL_NO_CONFIDANT` | 속마음 털어놓을 사람 없음 | `q153a1`-`q153a3` | 가족·친구·그 외 모두 없다 | 41.1 / 38.0 | A12_4 56.0 대 13.5 (순환); A11 26.8 대 3.4 | 감지 불가 | N |
+| `REL_NO_CONFIDANT` | 속마음 털어놓을 사람 없음 | `q153a1`-`q153a3` | 가족·친구·그 외 모두 없다 | 41.1 / 38.0 | A12_4 56.0 대 13.5 (순환) | 감지 불가 | N |
 | `REL_NO_ADVICE` | 조언 구할 사람 없음 | `q151a1`-`q151a3` | 가족·친구·그 외 모두 없다 | 26.4 / 23.2 | A12_1 36.8 대 6.2 (순환) | 감지 불가 | N |
 | `REL_FAMILY_CONFLICT` | 가족 관계 악화 | `q16a1`-`q16a5`, `q17` | 가족 관계 나쁨 이하 또는 은둔 갈등 심함 | 31.4 / 31.3 | B1_1 34.0 대 10.4 | 감지 불가 | N |
 | `REL_NO_FAMILY` | 가족 없음 | `q166` | 가족이 없다 | 1.6 / 2.2 | - | 감지 불가 | N |
@@ -409,11 +409,14 @@ S2 p.10은 2023년 수급자 1,413명·41.4%를 함께 제시하지만, 1,413/3,
 
 생성 코드: `uv run python -m src.features.risk_feature_dictionary`. 드라이브: [`risk_feature_dictionary.csv`](https://drive.google.com/file/d/1slrYQqQFFoo36vQ_sCIx2AX3tkPPKEvW/view)(21 × 12), [열 설명](https://drive.google.com/file/d/1PBmIuXwRKz2QB_SdGGVZv6ErzLaGQI7e/view). 입력은 `data/interim/`의 `risk_feature_dictionary_youth.csv`, `risk_features_youth.csv`, `risk_features_senior.csv`다.
 
-- **행:** 10/20에 확정한 21개 코드. 고령 12개는 모두 이 코드 안에 있다. 연령별로 다른 점은 범주를 나누지 않고 `AGE_PATTERN`에 적는다.
+- **행:** 10/20에 확정한 21개 코드와 10/22에 채택한 A-2 제안 코드 3개, 모두 24행이다. 고령 12개는 모두 21개 코드 안에 있다. 연령별로 다른 점은 범주를 나누지 않고 `AGE_PATTERN`에 적는다.
 - **청년 값을 쓰는 열:** `FEATURE_NAME`, `DEFINITION`, `DETECT_DATA`, `IS_CRISIS`, `SUPPORT_TYPES`, `SUPPORT_NEED_PCT`. 정의는 10/20 확정본이고, `SUPPORT_NEED_PCT`는 실태조사 "매우 필요함" 비율이라 같은 문항이 없는 고령 지원 제안은 넣지 않는다(고령 제안은 `risk_features_senior.csv`).
 - **연령대별로 잇는 열:** `AGE_PATTERN`, `EVIDENCE_SOURCE`, `EVIDENCE_VALUE`, `DETECT_RULE`. `[청년] … [고령·중장년] …` 형식이고, 고령 근거가 없는 9개는 `AGE_PATTERN`에 "A-2 근거 없음"으로 적는다.
 - **비워 둔 열:** `INSTITUTION_TAGS`는 #18에서 채운다. A-2 태그 후보는 `feature_tag_mapping_a2_draft.csv`에 있다.
-- **넣지 않은 것:** A-2 신규 코드 후보 3개(`proposed_senior_features.csv`). 팀 합의 뒤 행으로 추가한다.
+- **A-2 제안 코드 3개(10/22 채택):** `REL_NO_PRACTICAL_SUPPORT`(아플 때 도와줄 사람 없음), `REL_LOW_CONTACT`(사회적 교류 드묾), `BODY_MOBILITY_LIMIT`(이동·외출 수행 어려움). 사전은 지금 감지하는 특징의 표라 청년 근거가 없어도 코드를 둔다. 이름·정의·감지 방법은 `proposed_senior_features.csv`를 따르고, 같은 범주의 마지막 행 뒤에 넣는다.
+  - 청년 근거는 `REL_LOW_CONTACT`에만 있다. 서울시 `A11`(2주 교류 0회, 고립·은둔 26.8% 대 전체 청년 3.4%)은 교류 빈도 문항이라 `REL_NO_CONFIDANT`에서 이 코드로 옮겼다. 나머지 둘은 "청년 실태조사 근거 없음"으로 적는다.
+  - 보건복지부 문항이 없어 세 코드의 `SUPPORT_TYPES`·`SUPPORT_NEED_PCT`는 비어 있다. 비어 있을 때의 정렬은 #19에서 정한다.
+- **`BODY` 유지(10/22 확정):** A-2 검토대로 `HEALTH`·`LIFE`로 나누지 않는다.
 - `IS_CRISIS`는 두 작업본이 같다(위기 2개). 다르면 코드가 멈춘다.
 
 두 작업본이 엇갈린 항목(청년 값을 썼다). 자살 코드 2개의 이름은 10/22에 정의(지난 2주, 자해 포함)에 맞춰 A-2 이름으로 바꿨다(이전: 자살 생각, 자살 시도):
@@ -438,7 +441,6 @@ S2 p.10은 2023년 수급자 1,413명·41.4%를 함께 제시하지만, 1,413/3,
 
 ## 남은 확인
 
-- `BODY` 유지 또는 `HEALTH`·`LIFE` 분리 확정(A-2는 유지 권장), A-2 신규 코드 후보 3개 채택 여부
 - 김성아 외(2023) 보고서 부록의 고립·은둔 판정 기준 원문, 서울특별시(2022) 원 보고서의 `KEY_1`·`QCL_3` 정의
 - 서울연구원 PDF 14쪽 [표 3-3] 오즈비 원문 대조
 - `DETECT_RULE` 숫자 기준(#13·#24, #16), `INSTITUTION_TAGS`(#18)

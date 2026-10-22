@@ -71,9 +71,10 @@ A7_HOME_ROWS = [
 LOW_FREQ_ROWS = ["한 달에한 번", "2~3주에한 번", "일주일에한 번"]
 
 # (특징 코드, 서울시 표 코드, 해당 보기 행, 비고)
+# REL_LOW_CONTACT는 A-2 제안 코드라 청년 사전 행은 없고, 병합 사전(risk_feature_dictionary)이 쓴다.
 SEOUL_EVIDENCE = [
     ("REL_NO_CONFIDANT", "A12_4_1 TO A12_4_4", ["없음"], CIRCULAR_NOTE),
-    ("REL_NO_CONFIDANT", "A11", ["0회"], "판정 기준 밖 문항(2주간 교류 0회), 문항 응답자 기준"),
+    ("REL_LOW_CONTACT", "A11", ["0회"], "판정 기준 밖 문항(2주간 교류 0회), 문항 응답자 기준"),
     ("REL_NO_ADVICE", "A12_1_1 TO A12_1_4", ["없음"], CIRCULAR_NOTE),
     ("REL_FAMILY_CONFLICT", "B1_1", ["Bottom2(①+②)"], "가족 친밀도 문항(보건복지부 문항과 다름)"),
     ("OUT_LONG_DURATION", "A7", A7_HOME_ROWS, CIRCULAR_NOTE),

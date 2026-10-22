@@ -34,12 +34,13 @@ def _senior(crisis=0):
 
 
 RATES = pd.Series({"A_X": "ra", "B_Y": "rb"})
+NO_EXTRA = pd.DataFrame({"FEATURE_CODE": pd.Series(dtype="str")})
 
 
 def test_merge_keeps_youth_rows_and_labels_age_groups():
-    out, conflicts = rd.merge_dictionary(_youth(), _senior(), RATES)
+    out, conflicts = rd.merge_dictionary(_youth(), _senior(), RATES, NO_EXTRA)
     assert out["FEATURE_CODE"].tolist() == ["A_X", "B_Y"]
-    assert out.columns.tolist() == rd.DICTIONARY_COLUMNS
+    assert out.columns.tolist() == rd.rf.DICTIONARY_COLUMNS
     assert out.loc[0, "EVIDENCE_VALUE"] == "[청년] yv1 [고령·중장년] sv"
     assert out.loc[0, "AGE_PATTERN"] == "[청년] ra [고령·중장년] sp"
     assert out.loc[1, "AGE_PATTERN"] == "[청년] rb [고령·중장년] A-2 근거 없음"
@@ -50,7 +51,45 @@ def test_merge_keeps_youth_rows_and_labels_age_groups():
 
 def test_merge_rejects_crisis_mismatch_and_unknown_code():
     with pytest.raises(ValueError):
-        rd.merge_dictionary(_youth(), _senior(crisis=1), RATES)
+        rd.merge_dictionary(_youth(), _senior(crisis=1), RATES, NO_EXTRA)
     unknown = _senior().assign(FEATURE_CODE="Z_NEW")
     with pytest.raises(KeyError):
-        rd.merge_dictionary(_youth(), unknown, RATES)
+        rd.merge_dictionary(_youth(), unknown, RATES, NO_EXTRA)
+    with pytest.raises(KeyError):
+        rd.merge_dictionary(_youth(), _senior(), RATES, pd.DataFrame({"FEATURE_CODE": ["A_X"]}))
+
+
+def test_proposed_rows_go_after_their_category_and_use_youth_evidence():
+    proposed = pd.DataFrame(
+        {
+            "FEATURE_CODE": ["A_NEW", "B_NEW"],
+            "FEATURE_NAME": ["새가", "새나"],
+            "DEFINITION": ["d1", "d2"],
+            "EVIDENCE": ["S1 p.14(PDF18) 예시; S5 p.56~57(PDF6~7) 85.2%", "S3 p.6(PDF6) 외출"],
+            "DETECT_RULE": ["r1", "r2"],
+        }
+    )
+    evidence = pd.DataFrame(
+        {
+            "TABLE": ["RISK_FEATURE"],
+            "SOURCE": ["서울시 2022"],
+            "FEATURE_CODE": ["A_NEW"],
+            "GROUP": ["고립은둔"],
+            "ITEM_CODE": ["A11"],
+            "PCT": [26.8],
+            "COMPARE_PCT": [3.4],
+            "NOTE": [""],
+        }
+    )
+    extra = rd.proposed_rows(proposed, evidence)
+    out, _ = rd.merge_dictionary(_youth(), _senior(), RATES, extra)
+    assert out["FEATURE_CODE"].tolist() == ["A_X", "A_NEW", "B_Y", "B_NEW"]
+    a, b = out.loc[1], out.loc[3]
+    assert (
+        a["EVIDENCE_SOURCE"]
+        == "[청년] 서울시 2022 (A11) [고령·중장년] S1 p.14(PDF18); S5 p.56~57(PDF6~7)"
+    )
+    assert a["AGE_PATTERN"].startswith("[청년] 서울시 2022 A11: 고립·은둔 26.8% 대 전체 청년 3.4%")
+    assert b["AGE_PATTERN"].startswith("[청년] 청년 실태조사 근거 없음 [고령·중장년] A-2 제안 코드")
+    assert b["IS_CRISIS"] == "N" and b["DETECT_DATA"] == "감지 불가"
+    assert pd.isna(b["SUPPORT_NEED_PCT"])
