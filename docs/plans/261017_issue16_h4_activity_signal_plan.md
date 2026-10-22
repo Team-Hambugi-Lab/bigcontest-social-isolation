@@ -123,6 +123,7 @@ log(FLOW_a) ~ log(RESIDENT_a) + log1p(EMPLOYEES) + log(FLOW_OTHER_a) + C(STD_YM)
 - `institution`을 보류하는 이유: 집단시설 거주자는 이동이 제한되므로 잔차가 낮게 나오지만, 지역사회 고립과는 다른 현상이다. Task 1에서 추가했다.
 - `work_area` 분위를 지역별로 세는 이유: 강남과 춘천을 합쳐서 세면 상위권이 거의 강남 업무지로 채워져 춘천의 업무지가 걸러지지 않는다. 합쳐서 세는 방식은 민감도에서 비교한다. 총인구 0인 집계구는 비율이 정의되지 않지만 이미 `no_resident`로 보류된다.
 - `no_exposure_score`는 결합 함수에서 붙인다. 이번 산출물은 1,698개 집계구를 모두 포함하므로, 노출 점수가 없는 집계구가 결합 과정에서 조용히 빠지지 않는다.
+  - **변경(2026-10-22):** H4의 `HOLD_REASON`에 붙이지 않고 별도 열 `EXPOSURE_HOLD_REASON`에 둔다. 이유는 Task 7 참고.
 
 ### 6. 행정동 집계
 
@@ -218,12 +219,17 @@ log(FLOW_a) ~ log(RESIDENT_a) + log1p(EMPLOYEES) + log(FLOW_OTHER_a) + C(STD_YM)
 
 ### Task 7: 노출 지수(#13)와 결합 (10/20~21)
 - **선행 조건:** #17 위험 특징 사전 확정(10/20) → #13 노출 지수 차원 수정. #13 본문에 "#17이 확정되면 지수 차원을 사전 특징 중 SGIS로 감지할 수 있는 것에 맞춘다"고 되어 있다. 프로토타입으로 먼저 개발하고, 확정본이 나오면 다시 돌린다.
-- [ ] 노출 지수 파일 경로와 점수·차원 열 이름은 코드에 고정하지 않고 인자로 받는다. 결과에 사용한 지수 버전(파일명)을 기록한다
-- [ ] **노출 지수의 유동 차원 처리:** 프로토타입 종합점수에는 거주자당 유동(`z_flow_pc`, 낮을수록 위험)이 들어 있다. 활동 신호와 같은 정보라 그대로 결합하면 "유동이 낮다"를 두 번 센다. 확정본에서 이 차원이 빠지지 않으면, 이 차원을 뺀 점수로 다시 계산해 결합한다
-- [ ] 활동 신호를 #17 범주 코드(`OUT` 외출·활동 부족 예정)에 대응시킨다. 코드명은 #17 범주 틀 확정 후 맞춘다
-- [ ] `h4_signal_oa.csv`(1,698개 집계구 전체)를 기준으로 노출 점수를 left join한다. 점수가 없는 집계구는 빼지 않고 `JUDGEMENT_STATUS = held`, `HOLD_REASON`에 `no_exposure_score`를 붙인다
-- [ ] 행정동 × 연령대로 노출 점수와 `SIGNAL_RATE`를 나란히 놓은 `h4_exposure_combined_dong.csv`와 열 정의서를 만든다
-- [ ] 테스트: 노출 점수가 없는 집계구가 결합 후에도 남아 있고 `no_exposure_score`가 붙는지 확인
+- **진행(2026-10-22):** 결합 입력은 #13 프로토타입이 아니라 #24 SGIS 지수 v3.3(커밋 `339f993`, 드라이브 `data/interim/v3.3/`)이다. 모듈은 `src/modeling/h4_exposure_join.py`.
+- [x] 노출 지수 파일 경로는 `--index` 인자로 받는다(기본 `data/interim/v3.3/isolation_index_v3.csv`). 결과에 지수 버전(`INDEX_VERSION`, 지수 파일이 있는 폴더 이름)을 기록한다. 열 이름은 v3.3 기준으로 고정했다
+- [x] **노출 지수의 유동 차원 처리:** v3.3의 여섯 차원(`solo50`, `old`, `oldho`, `male_solo`, `housv`, `other50`)에는 유동 변수가 없다. 이중 반영 문제는 v3.3에서 없어졌다
+- [x] 활동 신호를 #17 범주 코드에 대응시킨다: `OUT_NO_ACTIVITY`의 고령 지역 감지 규칙(#17 PR #27)
+- [x] `h4_signal_oa.csv`의 60GU 행(1,698개 집계구 전체)에 지수를 left join한다. **변경:** 점수가 없는 집계구는 H4 판정을 바꾸지 않고 `EXPOSURE_STATUS = held`, `EXPOSURE_HOLD_REASON = no_exposure_score`로 따로 표시한다. #24에서 "지수 보류 집계구는 H4 신호로만 판단한다"고 합의했고, 재언 님(#16 10/22 코멘트)도 두 쪽 보류 사유를 각각 남기자고 했다. H4 판정을 `held`로 덮으면 이 집계구의 신호가 사라진다
+  - 결합 상태 `COMBINED_STATUS`: `judged_both`(둘 다 판정), `exposure_held`(지수 보류, 신호로만 판단), `signal_held`(H4 보류, 지수로만 판단), `double_held`(둘 다 보류)
+  - 관찰 후보 `EXPOSURE_HIGH`는 지수의 `watch`(보류 아님 AND (5등급 OR 테마 A ≥ 80 OR 테마 B ≥ 80))를 그대로 쓴다
+  - 20·30대는 결합하지 않는다. 외부검증에서 방향이 반대였다(보고서 6절)
+  - 두 값을 곱하거나 더한 점수는 만들지 않는다. 관찰 후보와 신호의 연관이 강남은 양(+), 춘천은 음(−)으로 지역마다 다르다(보고서 7절)
+- [x] 행정동 × 60GU로 지수 행정동 값과 `SIGNAL_RATE`를 나란히 놓은 `h4_exposure_combined_dong.csv`와 열 정의서를 만든다. 분모가 다르므로 열 설명에 [H4]·[지수]를 붙였다: `SIGNAL_RATE`는 판정 집계구 수, 지수 `*_w`는 평가 가구 가중평균이다
+- [x] 테스트: 노출 점수가 없는 집계구가 결합 후에도 남아 있고 `no_exposure_score`가 붙는지, 행정동 결합 개수가 맞는지 확인(`tests/test_h4_exposure_join.py`)
 - [ ] 드라이브 업로드 후 #16에 코멘트. 우선 대상 행정동 기준은 이 결과 파일을 보고 팀과 논의한다
 
 ---
@@ -236,7 +242,9 @@ log(FLOW_a) ~ log(RESIDENT_a) + log1p(EMPLOYEES) + log(FLOW_OTHER_a) + C(STD_YM)
 | `data/interim/h4_residual_oa_month.csv` | 집계구 × 월 × 연령대 | `FLOW`, `EXPECTED`, `RESID` |
 | `data/processed/h4_signal_dong.csv` | 행정동 × 연령대 | `N_OA`, `N_JUDGED`, `N_HELD`, `N_SIGNAL`, `SIGNAL_RATE`, `RESIDENT`, `DONG_POOLED_RESID` |
 | `data/processed/card_sgg_context.csv` | 지역 × 성별 × 연령대 | 업종 그룹 비중, 외지 고객 비중 |
-| `data/processed/h4_exposure_combined_dong.csv` | 행정동 × 연령대 | 노출 점수, `SIGNAL_RATE`, `N_JUDGED`, `N_HELD` (Task 7) |
+| `data/processed/h4_exposure_oa.csv` | 집계구(60GU) | H4 판정·신호, 지수 등급·테마 백분위·`watch`, `EXPOSURE_STATUS`, `COMBINED_STATUS`, `INDEX_VERSION` (Task 7) |
+| `data/processed/h4_exposure_combined_dong.csv` | 행정동(60GU) | `SIGNAL_RATE`, `N_JUDGED`, `N_HELD`, 지수 `score_w`·`share_hh_eval`, 결합 상태별 집계구 수 (Task 7) |
+| `data/interim/h4_exposure_summary.csv` | 지역 × 결합 상태 | 관찰 후보·신호 교차 집계구 수 (Task 7) |
 | 각 파일의 `*_dictionary.csv` | | 열 이름, 설명, 단위·값 범위, 결측 의미 |
 
 - CSV는 UTF-8로 저장한다.
@@ -252,7 +260,8 @@ log(FLOW_a) ~ log(RESIDENT_a) + log1p(EMPLOYEES) + log(FLOW_OTHER_a) + C(STD_YM)
 3. ~~신호 기준(`K=4`, `RESID < 0`)은 "조금이라도 낮은 달"을 센다. 잔차 크기 기준을 더할지는 잔차 분포를 보고 정한다.~~ **해결(2026-10-18):** `τ = 0.1`을 더했다. 4절과 보고서 2절 참고. 아래 34.4% 계산은 달끼리 독립이라는 가정이었고, 실제로는 ICC가 높아 `τ = 0`에서 약 50%가 신호였다.
    - **처음 근거:** 월별 잔차가 서로 독립이고 음수가 될 확률이 1/2이라면, 6개월 중 4개월 이상 음수일 확률은 (C(6,4) + C(6,5) + C(6,6)) / 2⁶ = (15 + 6 + 1) / 64 ≈ 34.4%다. 우연만으로도 집계구 세 곳 중 한 곳꼴로 `N_LOW_MONTHS ≥ 4`를 만족한다. 실제 잔차는 집계구 안에서 달끼리 상관이 있어서(ICC) 이 값이 그대로 맞지는 않지만, `RESID < 0` 기준이 느슨하다는 것은 보여 준다.
 4. 노출 × 활동 신호로 우선 대상 행정동을 고르는 기준은 정하지 않았다. Task 7 결과 파일을 만든 뒤 팀과 논의한다.
+   - **진행(2026-10-22):** 결합 방식은 점수 곱셈이 아니라 상태 분류로 정했다(Task 7). 우선 대상을 고르는 기준(예: 관찰 후보이면서 신호인 집계구 수)은 팀과 논의한다.
 5. **팀 확인 필요 (2026-10-17):**
-   - #17 범주 틀(10/16 예정)이 아직 이슈에 없고 A-1 담당이 미정이다. 늦어지면 #13 수정과 Task 7이 함께 밀린다.
-   - 노출 지수에서 거주자당 유동 차원을 뺄지. 노출은 "위험 특성을 가진 사람이 어디에 사나"(#13 본문)이고, 유동은 활동이라 #16 쪽에 가깝다.
-   - #13에서 제외된 49개 집계구의 제외 사유가 언제 공유되는지. Task 7의 `no_exposure_score` 표시에 쓴다.
+   - ~~#17 범주 틀(10/16 예정)이 아직 이슈에 없고 A-1 담당이 미정이다.~~ 해결: #17 사전이 PR #27로 병합됐다(10/22).
+   - ~~노출 지수에서 거주자당 유동 차원을 뺄지.~~ 해결: #24 v3.3에는 유동 차원이 없다.
+   - ~~#13에서 제외된 49개 집계구의 제외 사유가 언제 공유되는지.~~ 해결: v3.3은 1,698개 집계구를 모두 출력하고 보류 사유(`hold_reason`)를 남긴다.
