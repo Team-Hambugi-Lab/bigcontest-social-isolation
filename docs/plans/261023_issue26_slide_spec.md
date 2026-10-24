@@ -256,7 +256,7 @@
 | ID | 슬라이드 | 내용 | 자료·열 | 분류 | 상태 |
 |---|---|---|---|---|---|
 | M0 | 0 표지 | 강남·춘천 집계구 경계 밑그림 | 경계만 | 선만, 단색 | 제작 가능 |
-| M1 | 3 | 배경 지도 한 장: 강남 집계구 1인가구 비율, 전체 흐리게 + 역삼2동만 진하게·굵은 경계 | SGIS 2024 `ga_sd_005`, `to_ga_001` (`master_sgis2024_selected_no_industry_counts.csv`) | 연속 단계 색 1종, 두 지도 같은 구간 | 우리 등급 색(5등급)을 쓰지 않는다 |
+| M1 | 3 | 배경 지도 한 장: 강남 집계구 1인가구 비율, 전체 흐리게 + 역삼2동만 진하게·굵은 경계. **완료:** `docs/slides/figures/map_M1_oneperson_gangnam.png`(강남 전체), `map_M1_oneperson_yeoksam2.png`(역삼2동 확대), 코드 `src/visualization/map_m1_oneperson.py` | SGIS 2024 `ga_sd_005`, `to_ga_001` (`master_sgis2024_selected_no_industry_counts.csv`) | 연속 단계 색 1종, 두 지도 같은 구간 | 우리 등급 색(5등급)을 쓰지 않는다 |
 | M2 | 7 | 테마 A 지도 vs 테마 B 지도 ("두 얼굴") | `isolation_index_v3.csv` `theme_A_pct`, `theme_B_pct` | 백분위 5구간, 테마별 다른 색상 계열 | 제작 가능 |
 | M3 | 8 | 관찰 후보 477곳 (후보 유형별 색) | `isolation_index_v3.csv` `watch`, `type_label` | 고령 독거형 / 중장년 독거형 / 복합형 / 후보 아님 / 보류 | 제작 가능 |
 | M4 | 10 | 60대 이상 활동 신호 | `data/processed/h4_signal_oa.csv` (`AGE_BAND = 60GU`) `SIGNAL`, `JUDGEMENT_STATUS` | 신호 / 판정·신호 없음 / 보류 | 제작 가능 |
