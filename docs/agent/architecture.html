@@ -55,7 +55,7 @@
 
 <!-- ② 추천 -->
 <rect x="920" y="110" width="84" height="84" rx="8" fill="#5B8E3E"/><text x="962" y="157" class="b" text-anchor="middle">추천</text>
-<text x="1014" y="140" class="t">추천 · 연계</text><text x="1014" y="156" class="s">특징 → 매핑표 → 태그</text><text x="1014" y="171" class="s">지역·대상·거리, 연계 강도</text>
+<text x="1014" y="140" class="t">추천 · 연계</text><text x="1014" y="156" class="s">특징별 후보(PRIORITY) → NOTE 확인</text><text x="1014" y="171" class="s">지역·대상·운영 상태 → 다음 후보</text>
 <rect x="920" y="250" width="84" height="84" rx="8" fill="#6B7280"/><text x="962" y="297" class="b" text-anchor="middle">자원</text>
 <text x="1014" y="280" class="t">기관 DB · 지원사업</text><text x="1014" y="296" class="s">기관 17,925 · 사업 60</text><text x="1014" y="311" class="s">서비스 태그 16종</text>
 <rect x="920" y="390" width="84" height="84" rx="8" fill="#5B8E3E"/><text x="962" y="437" class="b" text-anchor="middle">후속</text>
@@ -159,9 +159,9 @@
   <text x="40" y="898">4 체크인 응답 · 무응답 · 이동 요약값(동의자)을 지속 수집</text>
   <text x="40" y="924">5 위험 판단: 특징 기반 티어 + 본인 기준선 대비 이상치</text>
   <text x="40" y="950">6 판단 → 추천: 특징 코드와 티어 전달</text>
-  <text x="560" y="820">7 매핑표 순위대로 태그 기관·모집 중 사업을 찾음 (지역·대상·거리)</text>
+  <text x="560" y="820">7 특징별 후보 순서대로 조건·의사 확인 → 기관·모집 중 사업 거름</text>
   <text x="560" y="846">8 추천을 앱에 전달, 동의 시 기관에 연계 요청</text>
-  <text x="560" y="872" style="fill:#B0435F">9 위기 신호 → 추천 생략, 사람에게 이관 + 위기 상담 기관 안내</text>
+  <text x="560" y="872" style="fill:#B0435F">9 위기 특징(IS_CRISIS) → 추천 생략, 사람에게 이관 + 위기 상담 안내</text>
   <text x="560" y="898">10 후속 확인(이용 · 효과) → 관찰로 돌아가 재분류</text>
   <text x="560" y="924">11 월 1회 우선 지원 지역·계층 산출 → 해당 사용자 관찰 빈도↑</text>
   <text x="560" y="950">12 미가입 주민 발굴, 지역×태그 기관 0곳이면 자원 공백 보고</text>
@@ -169,10 +169,10 @@
 <!-- 시나리오 -->
 <rect x="1080" y="805" width="450" height="160" rx="8" fill="#FAFAFA" stroke="#ccc"/>
 <text x="1096" y="830" class="h">활용 시나리오 (페르소나 예시)</text>
-<text x="1096" y="856" class="s">춘천 70대 1인 남성 — 온보딩에서 SOLO · REL 분류, 1티어</text>
+<text x="1096" y="856" class="s">춘천 70대 1인 남성 — SOLO_LIVING · REL_LOW_CONTACT, 1티어</text>
 <text x="1096" y="879" class="s">3주째 외출이 평소보다 크게 줄고 체크인 2회 무응답 → 3티어</text>
-<text x="1096" y="902" class="s">고립 전담기관이 춘천엔 없어 다음 순위 → 노인복지관 · 경로당</text>
-<text x="1096" y="925" class="s">동의 후 행정복지센터 연계, 2주 뒤 이용 여부 확인</text>
+<text x="1096" y="902" class="s">모임 참여 의사 확인 → SOCIAL_PART 1순위, 노인복지관 · 경로당</text>
+<text x="1096" y="925" class="s">고립 전담(2순위)은 춘천에 없음, 2주 뒤 이용 여부 확인</text>
 <text x="1096" y="948" class="s">같은 달 지역 층에서 해당 동 60대+가 우선 대상 → 관찰 빈도↑</text>
 </svg>
 </body></html>
