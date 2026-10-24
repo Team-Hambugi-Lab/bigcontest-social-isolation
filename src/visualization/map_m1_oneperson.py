@@ -105,8 +105,72 @@ def draw(oa: gpd.GeoDataFrame, dong: gpd.GeoDataFrame, focus_only: bool, out: Pa
     plt.close(fig)
 
 
+def draw_explain(oa: gpd.GeoDataFrame, dong: gpd.GeoDataFrame, out: Path) -> None:
+    """역삼2동만 그려 동 경계·집계구·두 덩어리(50% 이상 / 20% 미만)를 표시한다."""
+    cmap = ListedColormap(NAVY_STEPS)
+    norm = BoundaryNorm(BINS, cmap.N)
+    focus = dong[dong["ADM_NM"] == FOCUS_DONG]
+    f = oa[oa["ADM_CD"] == focus["ADM_CD"].iloc[0]]
+
+    fig, ax = plt.subplots(figsize=(9, 10))
+    ax.set_axis_off()
+    f.plot(
+        ax=ax,
+        column="solo_rate",
+        cmap=cmap,
+        norm=norm,
+        edgecolor="white",
+        linewidth=0.6,
+        missing_kwds={"color": NO_DATA_COLOR},
+    )
+    focus.boundary.plot(ax=ax, color="#E69F00", linewidth=3)
+
+    groups = (
+        (f[f["solo_rate"] >= 50], "A: 1인가구 50% 이상", "다세대·원룸 주택가", "#D55E00"),
+        (f[f["solo_rate"] < 20], "B: 1인가구 20% 미만", "아파트 단지", "#009E73"),
+    )
+    for part, title, kind, color in groups:
+        hh = part["SGIS2024_to_ga_001"].sum()
+        rate = part["SGIS2024_ga_sd_005"].sum() / hh * 100
+        blob = part.dissolve()
+        blob.boundary.plot(ax=ax, color=color, linewidth=1.5, linestyle="--")
+        p = blob.representative_point().iloc[0]
+        text = f"덩어리 {title}\n집계구 {len(part)}곳 · {hh:,.0f}가구 · 평균 {rate:.1f}%\n({kind})"
+        ax.annotate(
+            text,
+            (p.x, p.y),
+            ha="center",
+            fontsize=12,
+            color="white",
+            weight="bold",
+            bbox={"boxstyle": "round", "fc": color, "alpha": 0.9},
+        )
+
+    one = f.dropna(subset=["solo_rate"]).iloc[[0]]
+    one.boundary.plot(ax=ax, color="black", linewidth=2.5)
+    c = one.centroid.iloc[0]
+    minx, miny, _, maxy = focus.total_bounds
+    ax.annotate(
+        "집계구 하나 (검은 테두리)\n= 흰 가는 선으로 나뉜 칸 하나",
+        (c.x, c.y),
+        xytext=(minx, maxy + (maxy - miny) * 0.02),
+        fontsize=11,
+        arrowprops={"arrowstyle": "->"},
+    )
+    valid = f.dropna(subset=["solo_rate"])
+    dong_rate = valid["SGIS2024_ga_sd_005"].sum() / valid["SGIS2024_to_ga_001"].sum() * 100
+    ax.set_title(
+        f"{FOCUS_DONG} — 주황 굵은 선이 동 경계, 그 안의 칸 {len(f)}개가 집계구\n"
+        f"동 전체 1인가구 {dong_rate:.1f}% · 회색은 원자료 결측",
+        fontsize=14,
+        pad=40,
+    )
+    fig.savefig(out, dpi=300, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+
+
 def main() -> None:
-    """M1 지도 두 장(강남 전체, 역삼2동 확대)을 저장하고 수치를 확인한다."""
+    """M1 지도 세 장(강남 전체, 역삼2동 확대, 역삼2동 설명)을 저장하고 수치를 확인한다."""
     setup_style()
     oa = load_oa()
     dong = load_dong(oa.crs)
@@ -122,6 +186,7 @@ def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     draw(oa, dong, False, OUT_DIR / "map_M1_oneperson_gangnam.png")
     draw(oa, dong, True, OUT_DIR / "map_M1_oneperson_yeoksam2.png")
+    draw_explain(oa, dong, OUT_DIR / "map_M1_oneperson_yeoksam2_explain.png")
     print(f"저장: {OUT_DIR}")
 
 
