@@ -26,7 +26,7 @@
 <rect x="1230" y="56" width="310" height="450" rx="10" fill="#fff" stroke="#B0435F" stroke-dasharray="7 6" stroke-width="1.3"/>
 <text x="1246" y="82" class="h">③ 대응 프로세스 (외부 연계)</text>
 <rect x="290" y="540" width="910" height="225" rx="10" fill="#EEF1FA" stroke="#4F6FD0" stroke-width="1.3"/>
-<text x="306" y="752" class="h">④ 지역·인구집단 층 (월 1회 · 대회 제공 데이터)</text>
+<text x="306" y="752" class="h">④ 지역·인구집단 층 (관찰 우선 지역 · 대회 제공 데이터)</text>
 
 <!-- 사용자 -->
 <circle cx="62" cy="262" r="10" fill="none" stroke="#333" stroke-width="2"/>
@@ -77,9 +77,9 @@
 <rect x="590" y="590" width="84" height="84" rx="8" fill="#4F6FD0"/><text x="632" y="637" class="b" text-anchor="middle">SGIS</text>
 <text x="632" y="694" class="t" text-anchor="middle">공공 통계</text><text x="632" y="710" class="s" text-anchor="middle">인구·가구·주택</text>
 <rect x="770" y="590" width="84" height="84" rx="8" fill="#3F5BB8"/><text x="812" y="637" class="b" text-anchor="middle">산출</text>
-<text x="812" y="694" class="t" text-anchor="middle">지역 위험 산출</text><text x="812" y="710" class="s" text-anchor="middle">노출 지수 × 활동 신호</text>
+<text x="812" y="694" class="t" text-anchor="middle">지역 비교</text><text x="812" y="710" class="s" text-anchor="middle">노출 지수 · 활동 신호 나란히</text>
 <rect x="960" y="590" width="84" height="84" rx="8" fill="#3F5BB8"/><text x="1002" y="637" class="b" text-anchor="middle">우선</text>
-<text x="1002" y="694" class="t" text-anchor="middle">우선 지원 대상</text><text x="1002" y="710" class="s" text-anchor="middle">지역 × 인구집단</text>
+<text x="1002" y="694" class="t" text-anchor="middle">관찰 우선 지역</text><text x="1002" y="710" class="s" text-anchor="middle">개인 티어는 안 바꿈</text>
 <path class="ln" d="M414,632 L458,632" marker-end="url(#a)"/>
 <path class="ln" d="M544,632 L588,632" marker-end="url(#a)"/>
 <path class="ln" d="M674,632 L768,632" marker-end="url(#a)"/>
@@ -157,22 +157,22 @@
   <text x="40" y="846">2 앱 → 온보딩: 응답과 동의(체크인·이동 요약·기관 연계) 전달</text>
   <text x="40" y="872">3 응답을 위험 특징 사전으로 분류 → 특징 코드 부여</text>
   <text x="40" y="898">4 체크인 응답 · 무응답 · 이동 요약값(동의자)을 지속 수집</text>
-  <text x="40" y="924">5 위험 판단: 특징 기반 티어 + 본인 기준선 대비 이상치</text>
+  <text x="40" y="924">5 위험 판단: 해당 범주 수로 티어 + 본인 기준선 대비 악화 (개인 자료만)</text>
   <text x="40" y="950">6 판단 → 추천: 특징 코드와 티어 전달</text>
   <text x="560" y="820">7 특징별 후보 순서대로 조건·의사 확인 → 기관·모집 중 사업 거름</text>
   <text x="560" y="846">8 추천을 앱에 전달, 동의 시 기관에 연계 요청</text>
   <text x="560" y="872" style="fill:#B0435F">9 위기 특징(IS_CRISIS) → 추천 생략, 사람에게 이관 + 위기 상담 안내</text>
   <text x="560" y="898">10 후속 확인(이용 · 효과) → 관찰로 돌아가 재분류</text>
-  <text x="560" y="924">11 월 1회 우선 지원 지역·계층 산출 → 해당 사용자 관찰 빈도↑</text>
+  <text x="560" y="924">11 관찰 우선 지역·계층 → 해당 사용자 관찰 빈도↑ (티어 불변)</text>
   <text x="560" y="950">12 미가입 주민 발굴, 지역×태그 기관 0곳이면 자원 공백 보고</text>
 </g>
 <!-- 시나리오 -->
 <rect x="1080" y="805" width="450" height="160" rx="8" fill="#FAFAFA" stroke="#ccc"/>
 <text x="1096" y="830" class="h">활용 시나리오 (페르소나 예시)</text>
-<text x="1096" y="856" class="s">춘천 70대 1인 남성 — SOLO_LIVING · REL_LOW_CONTACT, 1티어</text>
-<text x="1096" y="879" class="s">3주째 외출이 평소보다 크게 줄고 체크인 2회 무응답 → 3티어</text>
+<text x="1096" y="856" class="s">춘천 70대 1인 남성 — SOLO_LIVING · REL_LOW_CONTACT, 범주 2개 → 티어 1</text>
+<text x="1096" y="879" class="s">2주 연속 외출이 기준선 절반 이하 → 티어 1→2 (가정)</text>
 <text x="1096" y="902" class="s">모임 참여 의사 확인 → SOCIAL_PART 1순위, 노인복지관 · 경로당</text>
 <text x="1096" y="925" class="s">고립 전담(2순위)은 춘천에 없음, 2주 뒤 이용 여부 확인</text>
-<text x="1096" y="948" class="s">같은 달 지역 층에서 해당 동 60대+가 우선 대상 → 관찰 빈도↑</text>
+<text x="1096" y="948" class="s">효자2동이 관찰 우선 지역 → 관찰 빈도↑, 티어는 그대로</text>
 </svg>
 </body></html>
