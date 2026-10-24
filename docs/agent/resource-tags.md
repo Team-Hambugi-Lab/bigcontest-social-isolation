@@ -1,7 +1,7 @@
-# 기관 서비스 태그와 위험 특징 매핑 — 2026-10-20
+# 기관 서비스 태그와 위험 특징 매핑 — 2026-10-24
 
-> 이슈 #18 산출물 설명. 기관 목록은 `src/features/institutions.py`로 다시 만든다.
-> `python -m src.features.institutions` → `data/processed/institutions.csv`, `feature_tag_mapping.csv`, `support_programs.csv`, 각 `_dictionary.csv`
+> 이슈 #18 산출물 설명. 현재 기관 원본 폴더가 확인되지 않아, 기존 `data/processed/institutions.csv`로 매핑만 갱신한다.
+> `python -m src.features.institutions --mapping-only --out-dir <출력 폴더>` → `feature_tag_mapping.csv`와 열 정의서
 > 서울시고립예방센터 원본은 `python scripts/collect_sihsc.py`로 다시 받는다.
 
 ## 1. 설계 원칙
@@ -10,7 +10,7 @@
 - **태그는 기관 유형 단위 규칙으로 단다.** 개별 기관 홈페이지를 읽어 붙이지 않았다. 같은 유형이면 같은 태그를 받는다. 예외는 두 가지다.
   - 노인맞춤돌봄 특화서비스 수행기관(고립·우울 노인 대상)에는 `MENTAL_CARE`와 `SOCIAL_PART`를 더 단다.
   - 서울시고립예방센터 협력기관에는 센터가 지정한 사업구분(고립가구 전담기구, 서울연결처방 등)에 맞는 태그를 더 단다 (5절).
-- **연계 강도로 정렬할 수 있게 했다.** 에이전트 플로우의 "티어가 높을수록 강한 연계(정보 제공 → 프로그램 참여 → 기관 사례관리)"에 맞춰 태그마다 강도를 둔다.
+- **태그별 연계 강도를 기록했다.** 티어와 연계 강도를 어떻게 연결할지는 #19에서 정한다.
 - **추천 대상이 아닌 시설은 뺐다.** 요양원·장기요양·재가요양, 장애인·아동 거주시설, 보육, 지역아동센터, 여성폭력 보호시설은 입소·등급 판정이 필요하거나 대상이 달라서 넣지 않았다.
 
 ## 2. 태그 16종
@@ -38,22 +38,39 @@
 
 ## 3. 위험 특징 → 태그 매핑 (`feature_tag_mapping.csv`)
 
-**#17 범주 초안(7개 + 위기)으로 만든 임시 매핑이다.** #17이 확정되면 코드 이름과 행을 맞춘다.
+**24개 세부 특징에 대한 44개 후보 연결**이다. 아래는 `PRIORITY` 순의 태그 요약이며, 연결 이유와 추가 확인 조건은 CSV의 `NOTE`에 있다. `PRIORITY`는 후보를 살펴볼 순서이지 서비스 적격 판정이나 자동 추천 순위가 아니다.
 
-| 특징 | 1순위 | 2순위 | 3순위 | 4순위 |
-|---|---|---|---|---|
-| `CRISIS` (IS_CRISIS) | `CRISIS_LINE` | `MENTAL_CARE` | | |
-| `MIND` 정신건강 | `MENTAL_CARE` | `ADDICTION` | `CARE_CHECK` (고령) | |
-| `REL` 관계 단절 | `ISOLATION_CARE` | `SOCIAL_PART` | `CASE_MGMT` | `FAMILY` |
-| `OUT` 외출·활동 부족 | `ISOLATION_CARE` | `SOCIAL_PART` | `PHYSICAL` | `LEARNING` |
-| `SOLO` 독거 | `CARE_CHECK` | `ISOLATION_CARE` | `SOCIAL_PART` | `MEAL` |
-| `BODY` 신체건강 | `HEALTH_MGMT` | `DEMENTIA` (고령) | `CARE_CHECK` | `DISABILITY` |
-| `ECON` 경제적 어려움 | `CASE_MGMT` | `JOB_INCOME` | `MEAL` | |
-| `HOUSE` 주거 취약 | `HOUSING` | `CASE_MGMT` | | |
+| 특징 코드 | 후보 태그 (`PRIORITY` 순) |
+|---|---|
+| `REL_NO_CONFIDANT` | `SOCIAL_PART`, `ISOLATION_CARE` |
+| `REL_NO_ADVICE` | `CASE_MGMT`, `SOCIAL_PART` |
+| `REL_FAMILY_CONFLICT` | `FAMILY` |
+| `REL_NO_FAMILY` | `SOCIAL_PART`, `CASE_MGMT` |
+| `REL_LONELY` | `SOCIAL_PART`, `MENTAL_CARE` |
+| `REL_NO_PRACTICAL_SUPPORT` | `CARE_CHECK`, `CASE_MGMT` |
+| `REL_LOW_CONTACT` | `SOCIAL_PART`, `ISOLATION_CARE` |
+| `OUT_LONG_DURATION` | `ISOLATION_CARE`, `SOCIAL_PART` |
+| `OUT_NO_ACTIVITY` | `SOCIAL_PART`, `LEARNING`, `PHYSICAL` |
+| `SOLO_LIVING` | `CARE_CHECK`, `SOCIAL_PART` |
+| `SOLO_MEAL` | `SOCIAL_PART`, `MEAL` |
+| `BODY_POOR_HEALTH` | `HEALTH_MGMT`, `DISABILITY` |
+| `BODY_HYGIENE` | `CARE_CHECK`, `HEALTH_MGMT` |
+| `BODY_HOME_CARE` | `CARE_CHECK`, `CASE_MGMT` |
+| `BODY_SLEEP` | `HEALTH_MGMT` |
+| `BODY_MOBILITY_LIMIT` | `CARE_CHECK`, `HEALTH_MGMT` |
+| `MIND_POOR_MENTAL` | `MENTAL_CARE` |
+| `MIND_HOPELESS` | `MENTAL_CARE` |
+| `MIND_SOCIAL_ANXIETY` | `MENTAL_CARE` |
+| `MIND_SUICIDE_IDEA` | `CRISIS_LINE`, `MENTAL_CARE` |
+| `MIND_SUICIDE_ATTEMPT` | `CRISIS_LINE`, `MENTAL_CARE` |
+| `ECON_NO_INCOME` | `JOB_INCOME`, `CASE_MGMT` |
+| `ECON_LOW_STATUS` | `CASE_MGMT`, `JOB_INCOME` |
+| `HOUSE_UNSTABLE` | `HOUSING`, `CASE_MGMT` |
 
-- `CRISIS`는 추천 단계를 건너뛰고 사람에게 이관하는 경로라서, 태그는 이관과 함께 안내할 기관이다.
-- `ISOLATION_CARE` 기관은 현재 서울에만 있다. 경기·인천·춘천에서는 해당 태그 기관이 없으므로 다음 순위로 넘어간다.
-- 같은 순위 안에서는 거리와 `TARGET_AGE` 일치로 고른다 (#19 추천 로직).
+- 자살 생각·시도는 일반 추천을 건너뛰고 사람에게 즉시 이관한다. `CRISIS_LINE`은 이관과 함께 안내하고 `MENTAL_CARE`는 그 이후 상담 후보로 둔다.
+- `MEAL`은 혼자 먹는다는 사실만으로 식사가 부족하다고 보지 않으며, 식사·식품 지원 필요를 확인할 때만 후보로 본다. `DISABILITY`도 장애 관련 지원 필요와 이용 자격을 확인해야 한다.
+- `ADDICTION`과 `DEMENTIA`는 현재 24개 특징 중 중독·인지 문제를 직접 나타내는 코드가 없어 연결하지 않았다. 정신건강 어려움이나 고령만으로 두 서비스를 권하지 않는다.
+- `ISOLATION_CARE` 기관은 현재 서울에만 확인됐다. 실제 추천에서는 지역·대상 연령·기관 서비스·운영 상태·본인 의사를 확인한다(#19).
 
 ## 4. 범위와 수집 결과
 

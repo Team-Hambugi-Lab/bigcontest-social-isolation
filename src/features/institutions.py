@@ -108,39 +108,72 @@ SEOUL_FACILITY_TYPES = {
     "쪽방상담소": "쪽방상담소",
     "노숙인종합지원센터": "노숙인종합지원센터",
 }
-# 위험 특징(#17 범주 초안) → 기관 태그. PRIORITY 1이 먼저 추천된다. #17 확정 시 코드를 맞춘다.
+# #17의 세부 특징 → 기관 서비스 후보. NOTE의 조건은 #19 추천 단계에서 확인한다.
 FEATURE_TAG_MAPPING = [
+    ("REL_NO_CONFIDANT", "SOCIAL_PART", 1, "정서적 관계를 넓히고 싶을 때 모임·프로그램 후보"),
+    ("REL_NO_CONFIDANT", "ISOLATION_CARE", 2, "고립 지원을 원할 때. 현재 서울 기관만 확인됨"),
+    ("REL_NO_ADVICE", "CASE_MGMT", 1, "생활·복지 문제의 조언이 필요할 때 상담 창구 후보"),
+    ("REL_NO_ADVICE", "SOCIAL_PART", 2, "지속적인 관계를 만들고 싶을 때 참여 프로그램 후보"),
+    ("REL_FAMILY_CONFLICT", "FAMILY", 1, "가족 관계 상담을 원할 때 가족센터 후보"),
+    ("REL_NO_FAMILY", "SOCIAL_PART", 1, "가족 외 관계 형성을 원할 때 모임·프로그램 후보"),
+    ("REL_NO_FAMILY", "CASE_MGMT", 2, "가족 대신 생활 지원·복지 상담이 필요할 때"),
+    ("REL_LONELY", "SOCIAL_PART", 1, "외로움 완화를 위한 관계 형성 프로그램을 원할 때"),
+    ("REL_LONELY", "MENTAL_CARE", 2, "정서적 고통으로 상담을 원할 때"),
     (
-        "CRISIS",
+        "REL_NO_PRACTICAL_SUPPORT",
+        "CARE_CHECK",
+        1,
+        "아플 때 생활 지원이 필요하면 안부·돌봄 서비스 확인",
+    ),
+    ("REL_NO_PRACTICAL_SUPPORT", "CASE_MGMT", 2, "생활 지원을 신청할 창구가 필요할 때"),
+    ("REL_LOW_CONTACT", "SOCIAL_PART", 1, "교류를 늘리고 싶을 때 참여 프로그램 후보"),
+    ("REL_LOW_CONTACT", "ISOLATION_CARE", 2, "고립 지원을 원할 때. 현재 서울 기관만 확인됨"),
+    ("OUT_LONG_DURATION", "ISOLATION_CARE", 1, "장기 은둔·고립 지원 후보. 현재 서울 기관만 확인됨"),
+    ("OUT_LONG_DURATION", "SOCIAL_PART", 2, "외부 활동을 시작할 의사가 있을 때 모임 후보"),
+    ("OUT_NO_ACTIVITY", "SOCIAL_PART", 1, "일상 활동·교류를 시작하고 싶을 때"),
+    ("OUT_NO_ACTIVITY", "LEARNING", 2, "학습·문화 활동을 원할 때"),
+    ("OUT_NO_ACTIVITY", "PHYSICAL", 3, "신체활동을 원하고 건강상 가능할 때"),
+    ("SOLO_LIVING", "CARE_CHECK", 1, "혼자 살며 안부 확인·생활 지원을 원할 때"),
+    ("SOLO_LIVING", "SOCIAL_PART", 2, "일상 교류를 원할 때. 독거 자체를 고립으로 단정하지 않음"),
+    ("SOLO_MEAL", "SOCIAL_PART", 1, "함께 식사하거나 교류할 프로그램을 원할 때"),
+    ("SOLO_MEAL", "MEAL", 2, "식사·식품 확보의 어려움이 별도로 확인될 때만"),
+    ("BODY_POOR_HEALTH", "HEALTH_MGMT", 1, "건강 상담·관리를 원할 때"),
+    ("BODY_POOR_HEALTH", "DISABILITY", 2, "장애 관련 지원 필요와 이용 자격이 확인될 때만"),
+    ("BODY_HYGIENE", "CARE_CHECK", 1, "위생 관리에 실제 도움이 필요할 때 돌봄 서비스 확인"),
+    ("BODY_HYGIENE", "HEALTH_MGMT", 2, "위생 곤란의 건강 원인 상담이 필요할 때"),
+    ("BODY_HOME_CARE", "CARE_CHECK", 1, "생활공간 정리·가사 지원이 필요할 때 서비스 범위 확인"),
+    ("BODY_HOME_CARE", "CASE_MGMT", 2, "가사 지원 신청·연계 상담이 필요할 때"),
+    ("BODY_SLEEP", "HEALTH_MGMT", 1, "수면 문제로 건강 상담을 원할 때"),
+    ("BODY_MOBILITY_LIMIT", "CARE_CHECK", 1, "이동·외출 동행 등 실제 돌봄 범위를 확인할 때"),
+    ("BODY_MOBILITY_LIMIT", "HEALTH_MGMT", 2, "이동 제한의 건강 원인 상담이 필요할 때"),
+    ("MIND_POOR_MENTAL", "MENTAL_CARE", 1, "정신건강 상담·치료 연계를 원할 때"),
+    ("MIND_HOPELESS", "MENTAL_CARE", 1, "절망감에 대한 상담을 원할 때. 자살 생각 여부는 별도 확인"),
+    ("MIND_SOCIAL_ANXIETY", "MENTAL_CARE", 1, "대인 불안 상담을 원할 때"),
+    (
+        "MIND_SUICIDE_IDEA",
         "CRISIS_LINE",
         1,
-        "IS_CRISIS 특징. 추천을 건너뛰고 사람에게 즉시 이관하며 위기 상담을 함께 안내",
+        "위기 경로: 일반 추천을 건너뛰고 사람에게 즉시 이관하며 위기 상담 안내",
     ),
-    ("CRISIS", "MENTAL_CARE", 2, "위기 이후 지속 상담"),
-    ("MIND", "MENTAL_CARE", 1, "우울·불안 상담과 치료 연계"),
-    ("MIND", "ADDICTION", 2, "음주 등 중독 문제가 함께 있을 때"),
-    ("MIND", "CARE_CHECK", 3, "고령이면 노인맞춤돌봄 특화서비스(고립·우울 노인)"),
-    ("REL", "ISOLATION_CARE", 1, "고립 전담기관 (현재 서울만 있음, 없으면 다음 순위)"),
-    ("REL", "SOCIAL_PART", 2, "모임·프로그램으로 관계 형성"),
-    ("REL", "CASE_MGMT", 3, "도움 요청할 사람이 없으면 사례관리 창구 연결"),
-    ("REL", "FAMILY", 4, "가족 관계 갈등이 원인일 때"),
-    ("OUT", "ISOLATION_CARE", 1, "은둔·외출 감소는 고립 전담기관 우선 (서울)"),
-    ("OUT", "SOCIAL_PART", 2, "외출 계기가 되는 정기 프로그램"),
-    ("OUT", "PHYSICAL", 3, "신체활동"),
-    ("OUT", "LEARNING", 4, "도서관·평생학습"),
-    ("SOLO", "CARE_CHECK", 1, "안부 확인·돌봄 (고령 독거)"),
-    ("SOLO", "ISOLATION_CARE", 2, "고립가구 전담기구의 발굴·사례관리 (서울)"),
-    ("SOLO", "SOCIAL_PART", 3, "독거로 줄어든 일상 접촉 보완"),
-    ("SOLO", "MEAL", 4, "혼자 식사를 거르는 경우"),
-    ("BODY", "HEALTH_MGMT", 1, "건강관리·방문건강"),
-    ("BODY", "DEMENTIA", 2, "고령이면 치매 검진"),
-    ("BODY", "CARE_CHECK", 3, "거동이 불편하면 돌봄"),
-    ("BODY", "DISABILITY", 4, "장애가 있으면 장애인복지관"),
-    ("ECON", "CASE_MGMT", 1, "긴급복지·기초생활 신청 창구"),
-    ("ECON", "JOB_INCOME", 2, "고용·자활"),
-    ("ECON", "MEAL", 3, "식사·식품 지원"),
-    ("HOUSE", "HOUSING", 1, "주거급여·공공임대 상담"),
-    ("HOUSE", "CASE_MGMT", 2, "주거 위기 사례관리"),
+    ("MIND_SUICIDE_IDEA", "MENTAL_CARE", 2, "위기 이관 이후 지속 상담 연계"),
+    (
+        "MIND_SUICIDE_ATTEMPT",
+        "CRISIS_LINE",
+        1,
+        "위기 경로: 일반 추천을 건너뛰고 사람에게 즉시 이관하며 위기 상담 안내",
+    ),
+    ("MIND_SUICIDE_ATTEMPT", "MENTAL_CARE", 2, "위기 이관 이후 지속 상담 연계"),
+    (
+        "ECON_NO_INCOME",
+        "JOB_INCOME",
+        1,
+        "취업·자활을 원할 때. 은퇴·연금생활을 경제 위기로 단정하지 않음",
+    ),
+    ("ECON_NO_INCOME", "CASE_MGMT", 2, "생활비 부족 또는 복지 신청 필요가 별도로 확인될 때"),
+    ("ECON_LOW_STATUS", "CASE_MGMT", 1, "경제적 어려움과 지원 필요를 확인한 뒤 복지 상담"),
+    ("ECON_LOW_STATUS", "JOB_INCOME", 2, "취업·자활을 원할 때"),
+    ("HOUSE_UNSTABLE", "HOUSING", 1, "주거 상담·지원 필요를 확인할 때"),
+    ("HOUSE_UNSTABLE", "CASE_MGMT", 2, "주거 위기와 복합 생활 지원이 필요할 때"),
 ]
 MENTAL_TYPES = {
     "MHW": "기초정신건강복지센터",
@@ -1080,11 +1113,14 @@ COLUMN_DEFINITIONS = {
         "위수탁 종료일",
         "노인맞춤돌봄 수행기관만. 지난 날짜면 현재 수행 여부 재확인 필요",
     ),
-    "FEATURE_CODE": ("위험 특징 코드", "#17 범주 초안 7개 + CRISIS. #17 확정 후 맞춘다"),
+    "FEATURE_CODE": ("위험 특징 코드", "risk_feature_dictionary.csv의 24개 세부 코드"),
     "TAG": ("서비스 태그", "institutions.csv TAGS와 같은 어휘"),
-    "PRIORITY": ("추천 순서", "1부터. 같은 특징 안에서 작은 값이 먼저"),
-    "NOTE": ("매핑 근거·조건", ""),
-    "N_INSTITUTIONS": ("해당 태그 기관 수", "생성 시점 institutions.csv 기준"),
+    "PRIORITY": ("후보 검토 순서", "특징마다 1부터. 이용 자격·추천 확정 순서가 아님"),
+    "NOTE": ("연결 근거·추가 확인 조건", "조건은 자동 판정되지 않으며 추천 전에 확인해야 함"),
+    "N_INSTITUTIONS": (
+        "해당 태그 전체 기관 수",
+        "생성 시점 institutions.csv 기준. 지역·연령별 이용 가능 수가 아님",
+    ),
     "PROG_ID": ("사업 ID", "SIHSC + 서울시고립예방센터 사업 번호"),
     "TITLE": ("사업명", "게시 제목 그대로"),
     "ORG_NAME": ("운영기관", "게시 표기 그대로. 여러 기관이면 쉼표로 이어짐"),
@@ -1108,21 +1144,62 @@ def dictionary(table: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=["COLUMN", "LABEL", "DESCRIPTION", "N_MISSING"])
 
 
+def feature_tag_mapping(institutions: pd.DataFrame, risk: pd.DataFrame) -> pd.DataFrame:
+    """24개 세부 특징과 실제 기관 태그를 검증한 뒤 후보 연결표를 만든다."""
+    mapping = pd.DataFrame(FEATURE_TAG_MAPPING, columns=["FEATURE_CODE", "TAG", "PRIORITY", "NOTE"])
+    if risk["FEATURE_CODE"].isna().any() or risk["FEATURE_CODE"].duplicated().any():
+        raise ValueError("위험 특징 사전에 결측 또는 중복 코드가 있음")
+    if not risk["IS_CRISIS"].isin(["Y", "N"]).all():
+        raise ValueError("위험 특징 사전에 잘못된 IS_CRISIS 값이 있음")
+    codes = set(risk["FEATURE_CODE"])
+    mapped = set(mapping["FEATURE_CODE"])
+    if codes != mapped:
+        raise ValueError(
+            f"매핑 코드 불일치: 누락={sorted(codes - mapped)}, 미등록={sorted(mapped - codes)}"
+        )
+    if (
+        mapping[["FEATURE_CODE", "TAG", "NOTE"]].isna().any().any()
+        or not mapping["NOTE"].str.strip().all()
+    ):
+        raise ValueError("매핑 코드·태그·근거에 빈값이 있음")
+    if mapping.duplicated(["FEATURE_CODE", "TAG"]).any():
+        raise ValueError("특징·태그 중복 연결")
+    for code, rows in mapping.groupby("FEATURE_CODE", sort=False):
+        if sorted(rows["PRIORITY"].tolist()) != list(range(1, len(rows) + 1)):
+            raise ValueError(f"{code}: 우선순위는 1부터 중복 없이 이어져야 함")
+    crisis_codes = set(risk.loc[risk["IS_CRISIS"].eq("Y"), "FEATURE_CODE"])
+    for code in crisis_codes:
+        first = mapping.loc[mapping["FEATURE_CODE"].eq(code)].sort_values("PRIORITY").iloc[0]
+        if first["TAG"] != "CRISIS_LINE":
+            raise ValueError(f"{code}: 위기 이관 태그가 1순위가 아님")
+    counts = institutions["TAGS"].dropna().str.split(";").explode().value_counts()
+    allowed_tags = {tag for value, _ in TYPE_RULES.values() for tag in value.split(";")}
+    unknown_tags = set(mapping["TAG"]) - (set(counts.index) & allowed_tags)
+    if unknown_tags:
+        raise ValueError(f"기관 목록에 없는 태그: {sorted(unknown_tags)}")
+    mapping["N_INSTITUTIONS"] = mapping["TAG"].map(counts)
+    return mapping
+
+
 def main(argv: list[str] | None = None) -> None:
-    """기관 목록 CSV를 data/processed/에 저장한다."""
+    """기관 전체 또는 기존 기관 목록을 이용한 매핑만 저장한다."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out-dir", default=str(paths.PROCESSED_DIR))
+    parser.add_argument("--mapping-only", action="store_true")
     args = parser.parse_args(argv)
     out_dir = Path(args.out_dir)
-    df = build_institutions()
-    mapping = pd.DataFrame(FEATURE_TAG_MAPPING, columns=["FEATURE_CODE", "TAG", "PRIORITY", "NOTE"])
-    tags = set(df["TAGS"].str.split(";").explode())
-    mapping["N_INSTITUTIONS"] = mapping["TAG"].map(
-        df["TAGS"].str.split(";").explode().value_counts()
+    df = (
+        pd.read_csv(paths.PROCESSED_DIR / OUTPUT_NAME)
+        if args.mapping_only
+        else build_institutions()
     )
-    assert set(mapping["TAG"]) <= tags, f"기관이 없는 태그: {set(mapping['TAG']) - tags}"
-    programs = build_programs(df)
-    for name, table in ((OUTPUT_NAME, df), (MAPPING_NAME, mapping), (PROGRAMS_NAME, programs)):
+    risk = pd.read_csv(paths.PROCESSED_DIR / "risk_feature_dictionary.csv")
+    mapping = feature_tag_mapping(df, risk)
+    tables = [(MAPPING_NAME, mapping)]
+    if not args.mapping_only:
+        tables = [(OUTPUT_NAME, df), *tables, (PROGRAMS_NAME, build_programs(df))]
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for name, table in tables:
         table.to_csv(out_dir / name, index=False, encoding="utf-8-sig")
         dictionary(table).to_csv(
             out_dir / name.replace(".csv", "_dictionary.csv"), index=False, encoding="utf-8-sig"
