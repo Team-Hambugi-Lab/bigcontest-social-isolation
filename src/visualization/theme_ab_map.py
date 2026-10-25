@@ -24,6 +24,7 @@ DONG_SHP = (
 )
 SGG = {"강남구": "11230", "춘천시": "32010"}
 OUT = ROOT / "docs/slides/figures/theme_ab_map.png"
+OUT_VERTICAL = ROOT / "docs/slides/figures/theme_ab_map_vertical.png"
 HOLD_COLOR = "#e9ebef"
 
 
@@ -38,6 +39,22 @@ def classify(d: pd.DataFrame) -> pd.Series:
     return g
 
 
+def draw_region(ax, region, idx, dong, colors, only_dong=False) -> None:
+    """한 지역의 집계구를 유형 색으로 칠한다. only_dong이면 읍·면을 빼고 동 지역만 그린다."""
+    oa = gpd.read_file(OA_SHP[region])
+    oa["TOT_OA_CD"] = oa["TOT_OA_CD"].astype(str)
+    oa = oa.merge(idx[["TOT_OA_CD", "group"]], on="TOT_OA_CD", how="left")
+    d = dong[dong["ADM_CD"].astype(str).str.startswith(SGG[region])].to_crs(oa.crs)
+    if only_dong:
+        d = d[d["ADM_NM"].str.endswith("동")]
+        oa = oa[oa["ADM_CD"].astype(str).isin(d["ADM_CD"].astype(str))]
+    oa.plot(
+        ax=ax, color=oa["group"].map(colors).fillna(HOLD_COLOR), edgecolor="white", linewidth=0.1
+    )
+    d.boundary.plot(ax=ax, color="white", linewidth=0.7)
+    ax.set_axis_off()
+
+
 def main() -> None:
     """두 지역 지도를 나란히 그리고 집계 수를 설계서 값과 대조한다."""
     setup_style()
@@ -50,22 +67,22 @@ def main() -> None:
     dong = gpd.read_file(DONG_SHP)
     colors = {**COLORS, "보류": HOLD_COLOR}
     fig, axes = plt.subplots(1, 2, figsize=(14, 7), gridspec_kw={"width_ratios": [1, 1.3]})
-    for ax, (region, shp) in zip(axes, OA_SHP.items()):
-        oa = gpd.read_file(shp)
-        oa["TOT_OA_CD"] = oa["TOT_OA_CD"].astype(str)
-        oa = oa.merge(idx[["TOT_OA_CD", "group"]], on="TOT_OA_CD", how="left")
-        oa["color"] = oa["group"].map(colors).fillna(HOLD_COLOR)
-        oa.plot(ax=ax, color=oa["color"], edgecolor="white", linewidth=0.1)
-        d = dong[dong["ADM_CD"].astype(str).str.startswith(SGG[region])].to_crs(oa.crs)
-        d.boundary.plot(ax=ax, color="white", linewidth=0.7)
+    for ax, region in zip(axes, OA_SHP):
+        draw_region(ax, region, idx, dong, colors)
         ax.set_title(region, fontsize=14)
-        ax.set_axis_off()
 
     labels = ["둘 다 상위", "A만 상위", "B만 상위", "그 외", "보류"]
     handles = [Patch(color=colors[k], label=f"{k} {n[k]:,}곳") for k in labels]
     fig.legend(handles=handles, loc="lower center", ncol=5, frameon=False, fontsize=11)
     fig.savefig(OUT, dpi=300, bbox_inches="tight", transparent=True)
-    print(f"저장: {OUT}")
+    plt.close(fig)
+
+    # 좁은 카드용 세로판: 강남 위, 춘천은 면적 왜곡을 피해 동 지역만. 범례는 Canva에서 단다.
+    fig, axes = plt.subplots(2, 1, figsize=(6, 10))
+    draw_region(axes[0], "강남구", idx, dong, colors)
+    draw_region(axes[1], "춘천시", idx, dong, colors, only_dong=True)
+    fig.savefig(OUT_VERTICAL, dpi=300, bbox_inches="tight", transparent=True)
+    print(f"저장: {OUT}, {OUT_VERTICAL}")
 
 
 if __name__ == "__main__":
