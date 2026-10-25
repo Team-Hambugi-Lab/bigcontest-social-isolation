@@ -1,4 +1,4 @@
-"""#24 제공 v3.3. uv run python -m src.features.isolation_index_v3.
+"""SGIS 집계구 고립 위험 지수 v3.3. uv run python -m src.features.isolation_index_v3.
 
 입출력은 src.data.paths 공통 경로를 사용한다. 계산 가정은 docs/isolation_index_v3.md 참조.
 """
@@ -152,7 +152,7 @@ def write_output_dictionaries(oa, adm):
             "column": "score",
             "name_kr": "종합 점수",
             "group": "종합",
-            "definition": "(theme_A_pct + theme_B_pct)/2. 평균 유지로 합의(이슈 #24)",
+            "definition": "(theme_A_pct + theme_B_pct)/2. 두 테마 평균",
             "unit": "0~100",
         },
         {
@@ -180,7 +180,7 @@ def write_output_dictionaries(oa, adm):
             "column": "watch",
             "name_kr": "관찰 후보",
             "group": "유형",
-            "definition": "보류 아님 AND (grade=5 OR theme_A_pct≥80 OR theme_B_pct≥80). 종합 3~4등급이어도 한 테마가 상위면 포함 (이슈 #24 후속 3번, v3.3). 지역 우선 후보 조건으로 C 작업과 공유",
+            "definition": "보류 아님 AND (grade=5 OR theme_A_pct≥80 OR theme_B_pct≥80). 종합 3~4등급이어도 한 테마가 상위면 포함 (v3.3). 지역 우선 후보 조건으로 통신 검증과 공유",
             "unit": "T/F",
         },
         {
@@ -596,7 +596,7 @@ def main() -> None:
             "일반",
         )
         d.loc[d.mixed & ~d.hold, "type_label"] += "(혼합지)"
-        d["watch"] = ok & ((d.grade == 5) | topA | topB)  # 지역 우선 후보 조건 (이슈 #24 3번)
+        d["watch"] = ok & ((d.grade == 5) | topA | topB)  # 지역 우선 후보 조건
 
         # 차원 계산에서 제외된 집계구도 행으로 유지 → grade 0, 보류 사유 세분화 (v3.3)
         excluded["hold"] = True
@@ -789,7 +789,7 @@ def main() -> None:
     print("saved:", OUT_ADM.relative_to(ROOT), "| rows/columns:", len(adm), len(adm.columns) + 1)
     print(adm.sort_values("share_hh_eval").head(8).round(3))
 
-    # ## 7. 저장 (C 작업용 컬럼: 집계구·행정동 코드, 테마 백분위, 종합 등급, 유형, 관찰 후보, 보류 사유, 결측 민감도, 가구 수)
+    # ## 7. 저장 (통신 검증용 컬럼: 집계구·행정동 코드, 테마 백분위, 종합 등급, 유형, 관찰 후보, 보류 사유, 결측 민감도, 가구 수)
 
     out = base.rename(
         columns={

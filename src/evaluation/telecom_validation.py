@@ -1,14 +1,14 @@
-"""서울 통신 관심집단으로 SGIS 지수 v3.3을 연관 검증한다 (이슈 #25).
+"""서울 통신 관심집단으로 SGIS 지수 v3.3을 연관 검증한다.
 
 관심집단 값은 통계모형으로 추정한 인원이고, 월별 값은 직전 3개월 평균이다.
-그래서 6개월은 평균 1회로 쓰고 월별 결과는 참고로만 둔다(#24 후속 7번 합의).
+그래서 6개월은 평균 1회로 쓰고 월별 결과는 참고로만 둔다.
 
 분자 '외출-커뮤니케이션이 모두 적은 집단(전체)'은 1인가구의 부분집합이 아니다.
 강남 3,168셀 중 84셀에서 1인가구수보다 크다. 그래서 두 지표를 함께 낸다.
   ratio_pop = 분자 / 같은 칸 인구 (주 지표, 0~1. 외출·커뮤니케이션이 모두 적은 집단의 추정 비율)
   ratio_1in = 분자 / 1인가구수   (참고. 1인가구 비중과 ρ = −0.91이라 판정에 쓰지 않는다)
 
-설계: docs/plans/261022_issue25_telecom_validation_design.md
+설계: docs/design/telecom_validation_design.md
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ from scipy import stats
 
 from src.data import paths
 
-# 서울시 7자리 → SGIS 8자리 코드 변환은 #16 외부검증과 같은 규칙을 쓴다(근거: external.DONG_CODE_FIX)
+# 서울시 7자리 → SGIS 8자리 코드 변환은 활동 신호 외부검증과 같은 규칙을 쓴다(근거: external.DONG_CODE_FIX)
 from src.evaluation.h4_external_validation import CODE_EXCEPTIONS, to_sgis_code
 
 GANGNAM = "강남구"
@@ -85,7 +85,7 @@ THEMES = ("theme_A", "theme_B")
 N_BOOT = 2000
 RANDOM_STATE = 42
 CI = (2.5, 97.5)
-# #24 한계 2의 고령 임대단지 후보 (일원1동, 수서동)
+# SGIS 지수 v3 한계로 짚은 고령 임대단지 후보 (일원1동, 수서동)
 RENTAL_CANDIDATES = ("11230730", "11230750")
 
 DBF_HEADER_SIZE = 32
@@ -232,7 +232,7 @@ def sgis_dong_scores(adm: pd.DataFrame, oa: pd.DataFrame) -> pd.DataFrame:
     """v3.3 행정동 집계본에 기준선·보조 지표와 z 점수 민감도 점수를 붙인다(강남만).
 
     z 점수는 보류 제외(행정동 집계본과 같은 '보류 아님 & 점수 유효' 행)와 보류 포함 두 가지로
-    가중평균한다. 척도를 고정해야 보류 포함의 효과만 따로 볼 수 있다(#24 재언 님 코멘트).
+    가중평균한다. 척도를 고정해야 보류 포함의 효과만 따로 볼 수 있다.
     """
     out = adm.loc[adm["ADM_CD"].str.startswith(GANGNAM_SGG)].copy()
     out["single_share"] = out["hh_single_eval"] / out["hh_eval"]

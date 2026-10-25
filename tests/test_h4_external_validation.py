@@ -1,4 +1,4 @@
-"""서울 통신정보 대조 테스트 (#16)."""
+"""서울 통신정보 대조 테스트."""
 
 import pandas as pd
 import pytest

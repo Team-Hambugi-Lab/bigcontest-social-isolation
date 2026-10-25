@@ -1,13 +1,13 @@
-"""청년(A-1)과 고령·중장년(A-2) 작업본을 합쳐 위험 특징 사전 risk_feature_dictionary.csv를 만든다.
+"""청년 작업본과 고령·중장년 작업본을 합쳐 위험 특징 사전 risk_feature_dictionary.csv를 만든다.
 
-- 행은 청년 사전의 21개 특징 코드와 10/22에 채택한 A-2 제안 코드 3개다.
+- 행은 청년 사전의 21개 특징 코드와 10/22에 채택한 고령·중장년 제안 코드 3개다.
   연령별 차이는 범주를 나누지 않고 AGE_PATTERN에 적는다.
 - 코드·이름·정의·감지 데이터·위기 여부·필요 지원은 10/20에 확정한 청년 사전을 따른다.
   SUPPORT_NEED_PCT가 실태조사 "매우 필요함" 비율이라 고령 쪽(비율 없음)은 넣지 않는다.
 - 근거 출처·수치·감지 방법은 연령대별로 이어 붙인다.
-- 제안 코드의 이름·정의는 A-2 값을 쓰고, 청년 근거는 서울시 집계표에 있는 것만 붙인다.
+- 제안 코드의 이름·정의는 고령·중장년 작업본 값을 쓰고, 청년 근거는 서울시 집계표에 있는 것만 붙인다.
   보건복지부 문항이 없어 SUPPORT_TYPES·SUPPORT_NEED_PCT는 비운다.
-- INSTITUTION_TAGS는 #18에서 채운다(A-2 태그 후보는 feature_tag_mapping_a2_draft.csv).
+- INSTITUTION_TAGS는 기관 서비스 태그 매핑에서 채운다.
 """
 
 import re
@@ -18,17 +18,17 @@ from src.data.paths import INTERIM_DIR, PROCESSED_DIR
 from src.features import risk_features_youth as rf
 
 YOUTH_LABEL, SENIOR_LABEL = "청년", "고령·중장년"
-NO_SENIOR = "A-2 근거 없음"
+NO_SENIOR = "근거 자료 없음"
 NO_YOUTH = "청년 실태조사 근거 없음"
-PROPOSED_PATTERN = "A-2 제안 코드(10/22 채택), 고령 근거: {}"
+PROPOSED_PATTERN = "제안 코드(10/22 채택), 고령 근거: {}"
 CONCAT_COLUMNS = ["EVIDENCE_SOURCE", "EVIDENCE_VALUE", "DETECT_RULE"]
 CRISIS_FLAG = {1: "Y", 0: "N"}  # A-2는 IS_CRISIS를 0/1로 적었다
-SOURCE_REF = re.compile(r"S\d+ pp?\.\S+")  # A-2 근거 문장의 "S1 p.14(PDF18)" 같은 출처
-# SGIS 지수 v3.2(#24)에서 이 특징에 쓰는 지표. 고령·중장년 감지 방법 끝에 붙인다.
+SOURCE_REF = re.compile(r"S\d+ pp?\.\S+")  # 고령·중장년 근거 문장의 "S1 p.14(PDF18)" 같은 출처
+# SGIS 지수 v3.2에서 이 특징에 쓰는 지표. 고령·중장년 감지 방법 끝에 붙인다.
 INDEX_RULES = {
-    "SOLO_LIVING": "지역 지수 v3.2(#24): 테마 A solo50(1인가구율×50세+ 비율), 테마 B male_solo"
+    "SOLO_LIVING": "지역 지수 v3.2: 테마 A solo50(1인가구율×50세+ 비율), 테마 B male_solo"
     "(50-64세 남성 비율×1인가구율) 백분위가 높음",
-    "HOUSE_UNSTABLE": "지역 지수 v3.2(#24): 테마 B housv(비주거용 건물 내 주택·20㎡ 이하 비율), "
+    "HOUSE_UNSTABLE": "지역 지수 v3.2: 테마 B housv(비주거용 건물 내 주택·20㎡ 이하 비율), "
     "other50(주택 이외 거처 비율×50세+ 비율, 고시원 대리) 백분위가 높음",
 }
 
@@ -53,7 +53,7 @@ def youth_rates(evidence: pd.DataFrame) -> pd.Series:
 
 
 def proposed_rows(proposed: pd.DataFrame, evidence: pd.DataFrame) -> pd.DataFrame:
-    """채택한 A-2 제안 코드를 사전 행으로 만든다. 청년 근거는 근거 표에 있으면 붙인다."""
+    """채택한 고령·중장년 제안 코드를 사전 행으로 만든다. 청년 근거는 근거 표에 있으면 붙인다."""
     feats = evidence[evidence["TABLE"] == "RISK_FEATURE"]
     rows = []
     for p in proposed.to_dict("records"):

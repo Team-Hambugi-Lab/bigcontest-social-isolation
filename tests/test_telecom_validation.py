@@ -1,4 +1,4 @@
-"""통신 관심집단 연관 검증(#25) 1단계 테스트."""
+"""통신 관심집단 연관 검증 1단계 테스트."""
 
 import struct
 import unicodedata

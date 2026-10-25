@@ -1,9 +1,9 @@
-"""연령대별 기대 유동 모델, 활동 저하 신호 판정, 행정동 집계, 민감도 (이슈 #16).
+"""연령대별 기대 유동 모델, 활동 저하 신호 판정, 행정동 집계, 민감도.
 
 기대값 모델(연령대별 OLS):
     log(FLOW_a) ~ log(RESIDENT_a) + log1p(EMPLOYEES) + log(FLOW_OTHER_a) + C(STD_YM) + C(REGION)
 보류가 아닌 행으로만 적합하고, 잔차는 log가 정의되는 모든 행에 계산한다.
-설계 근거: docs/plans/261017_issue16_h4_activity_signal_plan.md 3~6절, 민감도 절.
+설계 근거: docs/design/activity_signal_design.md 3~6절, 민감도 절.
 
 실행: uv run python -m src.modeling.h4_activity_signal
 """

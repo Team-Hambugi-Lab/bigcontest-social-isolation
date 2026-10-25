@@ -1,4 +1,4 @@
-"""집계구 마스터 → 분석용 피처 테이블(이슈 #10) 테스트."""
+"""집계구 마스터 → 분석용 피처 테이블 테스트."""
 
 import numpy as np
 import pandas as pd
