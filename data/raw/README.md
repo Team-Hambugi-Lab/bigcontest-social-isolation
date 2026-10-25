@@ -114,18 +114,15 @@ ln -s "$(pwd)/<콤마 변환 SK 폴더>"/*.csv data/raw/sk_telecom/
 ln -s "$(pwd)/<콤마 변환 신한카드 폴더>"/*.csv data/raw/shinhan_card/
 ```
 
-**다른 경로를 쓰는 코드도 있습니다.** `src/features/block_panel.py`·`risk_axes_v1.py`
-(재언 위험지수 재현·검증 쪽)는 위 `sk_telecom/`이 아니라 `data/raw/sk_통신인구_{202507..
-202512}_통합.csv`(age/time/wkdy 3테이블을 outer join으로 미리 합친 파일, `src/features/
-build_sk_integrated.py`로 생성)를 직접 읽습니다. 둘 중 어느 쪽이 필요한지는 작업 중인
-모듈이 어느 걸 import하는지로 확인하세요.
+월별 통합 파일 `data/raw/sk_통신인구_{202507..202512}_통합.csv`는 age/time/wkdy 3테이블을
+outer join으로 합친 파일이며 `src/features/build_sk_integrated.py`로 생성합니다.
 
 `src/data/external.py`의 `EXTERNAL_DIR`은 폴더명에 "SGIS"가 들어간 폴더를 `data/raw/` 아래에서
 자동으로 찾습니다(`국가데이터처_SGIS 행정구역 통계 및 경계/`가 그대로 잡힙니다) — 별도로
 `data/raw/external/`을 만들 필요는 없습니다. 이 폴더의 통계 CSV는 시도·시군구·행정동(8자리)
 코드가 한 파일에 섞여 있는데, 로더가 8자리(행정동)만 자동으로 걸러 씁니다.
 
-`src/features/block_panel.py`(집계구 공간조인)는 별도로 아래 두 shapefile이 필요합니다.
+집계구 공간조인에는 아래 두 shapefile이 필요합니다.
 
 ```text
 data/raw/reference_data/강남_집계구경계/bnd_oa_11230_2025_2Q.shp

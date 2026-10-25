@@ -58,8 +58,7 @@ uv sync --extra dev --extra gis
 ├── src/
 │   ├── features/      # 피처 생성
 │   ├── modeling/      # 모델 학습
-│   ├── evaluation/    # 평가
-│   └── visualization/ # 시각화
+│   └── evaluation/    # 평가
 └── tests/             # 테스트
 ```
 
