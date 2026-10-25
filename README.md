@@ -48,7 +48,6 @@ uv sync --extra dev --extra gis
 ## 디렉터리 구조
 
 ```text
-├── configs/           # 분석·모델 설정
 ├── data/
 │   ├── raw/           # 원본 데이터
 │   ├── interim/       # 중간 처리 데이터
