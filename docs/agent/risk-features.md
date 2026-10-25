@@ -111,8 +111,6 @@
 | [`regional_feature_linkage.csv`](https://drive.google.com/file/d/1bzmSoA8HuHGuCYg-1x3Smm5jnzDGtRTp/view) | 7 × 6 | [dictionary](https://drive.google.com/file/d/1cS0ZTrUdJWMAJiamq70R0xJNF_TsxLvU/view) |
 | [`feature_merge_review.csv`](https://drive.google.com/file/d/1tqqltOx-DZgLdjOiemjBbF_cvYKwARgy/view) | 12 × 8 | [dictionary](https://drive.google.com/file/d/12v7cT-FXiZkzMQeSvfmqYhiE_AT698Wb/view) |
 
-전체 검토 기록: [A-2 검토 보고서](../../reports/261020_issue17_a2_review.md).
-
 검토 반영본 · 작성 기준: 2026-10-20, [이슈 #17](https://github.com/Team-Hambugi-Lab/bigcontest-social-isolation/issues/17)의 10/20 최종 수정.
 
 ### 전달할 결론

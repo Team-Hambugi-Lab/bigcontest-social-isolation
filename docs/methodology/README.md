@@ -6,10 +6,9 @@
 
 1. [연구 프레임](research-framework.md): 분석 단위, 지표 설계, 데이터 품질과 검증 절차
 2. [선행연구·조사자료](prior-research.md): 이전에 찾은 연구와 실태조사에서 가져올 수 있는 기준과 한계
-3. [기존 분석의 검증 기록](validation-lessons.md): 과거 팀 분석에서 확인한 반례와 아직 확정하지 않은 지표
-4. [지원 사각지대 규모 추정](blind-spot-estimation.md): 기존 자료로 가능한 추정과 필요한 추가 관측값
-5. [정책 문헌 정리](policy-literature.md): 고독·고립의 개념 구분, 단계화, 지원 연결과 평가 원칙
-6. [사회적 고립 위험 지역 지표 선행연구 리뷰](social_isolation_literature_review.md): 국내외 문헌 비교, 변수 후보 및 프로토타입 실행 기록을 담은 검토 자료(2026-10-15)
+3. [지원 사각지대 규모 추정](blind-spot-estimation.md): 기존 자료로 가능한 추정과 필요한 추가 관측값
+4. [정책 문헌 정리](policy-literature.md): 고독·고립의 개념 구분, 단계화, 지원 연결과 평가 원칙
+5. [사회적 고립 위험 지역 지표 선행연구 리뷰](social_isolation_literature_review.md): 국내외 문헌 비교, 변수 후보 및 프로토타입 실행 기록을 담은 검토 자료(2026-10-15)
 
 데이터의 실제 구조와 결합 기준은 [제공 데이터 명세 및 활용 가이드](../data-overview.md)를 함께 참고한다.
 
