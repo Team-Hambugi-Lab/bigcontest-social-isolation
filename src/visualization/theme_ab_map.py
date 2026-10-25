@@ -25,6 +25,7 @@ DONG_SHP = (
 SGG = {"강남구": "11230", "춘천시": "32010"}
 OUT = ROOT / "docs/slides/figures/theme_ab_map.png"
 OUT_VERTICAL = ROOT / "docs/slides/figures/theme_ab_map_vertical.png"
+OUT_VERTICAL_FULL = ROOT / "docs/slides/figures/theme_ab_map_vertical_full.png"
 HOLD_COLOR = "#e9ebef"
 
 
@@ -82,6 +83,13 @@ def main() -> None:
     draw_region(axes[0], "강남구", idx, dong, colors)
     draw_region(axes[1], "춘천시", idx, dong, colors, only_dong=True)
     fig.savefig(OUT_VERTICAL, dpi=300, bbox_inches="tight", transparent=True)
+    plt.close(fig)
+
+    # 같은 세로판, 춘천 읍·면 포함
+    fig, axes = plt.subplots(2, 1, figsize=(6, 10))
+    draw_region(axes[0], "강남구", idx, dong, colors)
+    draw_region(axes[1], "춘천시", idx, dong, colors)
+    fig.savefig(OUT_VERTICAL_FULL, dpi=300, bbox_inches="tight", transparent=True)
     print(f"저장: {OUT}, {OUT_VERTICAL}")
 
 
