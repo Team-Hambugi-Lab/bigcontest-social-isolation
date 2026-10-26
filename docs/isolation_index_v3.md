@@ -5,10 +5,10 @@
 | `notebooks/261020_GIS_isolation_index_v3.ipynb` | v3.3 실행 노트북 |
 | `src/features/isolation_index_v3.py` | 같은 계산의 스크립트. import만으로 분석하지 않음 |
 | `docs/isolation_index_v3_dictionary.md` | 집계구·행정동 결과의 열 정의 |
-| `data/interim/isolation_index_v3.csv` + `.csvt` | 집계구 1,698행×40열. 스크립트 실행 시 생성 |
-| `data/interim/isolation_index_v3_adm.csv` + `.csvt` | 행정동 47행×17열. 스크립트 실행 시 생성 |
-| `data/interim/isolation_index_v3_dictionary.csv` | 집계구 사전 40개 변수. 스크립트 실행 시 생성 |
-| `data/interim/isolation_index_v3_adm_dictionary.csv` | 행정동 사전 17개 변수. 스크립트 실행 시 생성 |
+| `data/interim/v3.3/isolation_index_v3.csv` + `.csvt` | 집계구 1,698행×40열. 스크립트 실행 시 생성 |
+| `data/interim/v3.3/isolation_index_v3_adm.csv` + `.csvt` | 행정동 47행×17열. 스크립트 실행 시 생성 |
+| `data/interim/v3.3/isolation_index_v3_dictionary.csv` | 집계구 사전 40개 변수. 스크립트 실행 시 생성 |
+| `data/interim/v3.3/isolation_index_v3_adm_dictionary.csv` | 행정동 사전 17개 변수. 스크립트 실행 시 생성 |
 
 입력: `data/processed/master_sgis2024_selected_no_industry_counts.csv` (SK 집계구 집계와 SGIS 2024 집계구 통계를 결합한 마스터).
 패키지는 `pyproject.toml`·`uv.lock` 기준이다. 저장소 루트에서 실행한다.

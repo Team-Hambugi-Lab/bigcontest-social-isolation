@@ -53,17 +53,13 @@ N_BOOT = 2000
 SEED = 42
 
 
-def prototype_files(interim_dir: Path = paths.INTERIM_DIR) -> tuple[Path, Path]:
-    folders = [
-        p
-        for p in interim_dir.iterdir()
-        if p.is_dir() and (p / "isolation_index_prototype.csv").is_file()
-    ]
-    if len(folders) != 1:
-        raise FileNotFoundError(
-            f"expected one prototype folder under {interim_dir}, found {len(folders)}"
-        )
-    return folders[0] / "isolation_index_prototype.csv", folders[0] / "isolation_index_no_oldho.csv"
+def prototype_files(folder: Path = paths.PROCESSED_DIR / "isolation_index") -> tuple[Path, Path]:
+    """프로토타입 노트북(261015)이 저장한 두 결과 경로를 반환한다."""
+    files = folder / "isolation_index_prototype.csv", folder / "isolation_index_no_oldho.csv"
+    missing = [p.name for p in files if not p.is_file()]
+    if missing:
+        raise FileNotFoundError(f"{folder}에 {missing}가 없다. 프로토타입 노트북을 먼저 실행한다")
+    return files
 
 
 def load_prototypes() -> tuple[pd.DataFrame, pd.DataFrame]:

@@ -19,10 +19,11 @@ if str(ROOT) not in sys.path:
 from src.data.paths import INTERIM_DIR, PROCESSED_DIR  # noqa: E402
 
 SRC = PROCESSED_DIR / "master_sgis2024_selected_no_industry_counts.csv"
-OUT = INTERIM_DIR / "isolation_index_v3.csv"
+OUT_DIR = INTERIM_DIR / "v3.3"  # 활동 신호 결합·통신 검증이 이 폴더를 읽는다
+OUT = OUT_DIR / "isolation_index_v3.csv"
 OUT_TYPES = OUT.with_suffix(".csvt")
 OUT_DICTIONARY = OUT.with_name(f"{OUT.stem}_dictionary.csv")
-OUT_ADM = INTERIM_DIR / "isolation_index_v3_adm.csv"
+OUT_ADM = OUT_DIR / "isolation_index_v3_adm.csv"
 OUT_ADM_TYPES = OUT_ADM.with_suffix(".csvt")
 OUT_ADM_DICTIONARY = OUT_ADM.with_name(f"{OUT_ADM.stem}_dictionary.csv")
 

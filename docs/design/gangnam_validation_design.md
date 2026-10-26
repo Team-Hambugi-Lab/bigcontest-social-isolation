@@ -12,12 +12,12 @@
 
 ## 2. 확인한 입력과 연결
 
-원본 데이터는 메인 로컬 체크아웃의 `data/`에 있고, 이 worktree에는 필요한 경로만 심볼릭 링크로 연결했다. 분석 코드는 저장소 상대경로를 사용한다. 한글 폴더명이 NFD로 저장될 수 있으므로 프로토타입 폴더는 `isolation_index_prototype.csv`가 있는 하위 폴더로 찾는다.
+분석 코드는 저장소 상대경로를 사용한다. 프로토타입 결과는 노트북 `261015_GIS_isolation_index_prototype.ipynb`가 저장한 파일을 읽는다.
 
 | 입력 | 확인 결과 | 사용 |
 |---|---|---|
-| `data/interim/1차 지역 결과/isolation_index_prototype.csv` | 1,649행 × 24열, SHA-256 앞 16자리 `ff96f9fa4d42a02c` | 노후주택 포함 |
-| 같은 폴더의 `isolation_index_no_oldho.csv` | 1,649행 × 24열, `739a950360b87448` | 노후주택 제외 |
+| `data/processed/isolation_index/isolation_index_prototype.csv` | 1,649행 × 24열. 노트북 재실행 시 수치 차이 1e-13 미만 | 노후주택 포함 |
+| 같은 폴더의 `isolation_index_no_oldho.csv` | 1,649행 × 24열 | 노후주택 제외 |
 | `data/processed/master_sgis2024_selected_no_industry_counts.csv` | 1,698개 집계구 × 6개월 = 10,188행. 프로토타입에 없는 코드 49개 | 전체 집계구·제외 사유·동별 분모 |
 | `data/interim/gangnam22_v3_validation.csv` | 22행 × 32열, `ebcf88579b98ee16` | 통신 관심집단 검증의 주 대조 지표 `ratio_pop_*`와 동 코드 대응 재사용 |
 | `data/interim/v3.3/isolation_index_v3_adm.csv` | 47행 × 17열, `23f77441bc0fd4a9` | 통신 관심집단 검증의 v3.3 결과 버전 확인용 |
