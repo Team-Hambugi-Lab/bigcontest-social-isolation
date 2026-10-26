@@ -45,6 +45,14 @@ GIS 분석이 필요할 때만 선택 의존성을 설치합니다.
 uv sync --extra dev --extra gis
 ```
 
+## SGIS 결합 마스터 재현
+
+SK 월별 통합 CSV → 집계구 공간 집계 → **SGIS 2024 결합·변수 선택** → 지수·활동 신호·검증 순서입니다.
+`notebooks/261005_GIS_skt_census_aggregation.ipynb`의 마지막 통합 셀까지 실행한 뒤,
+`notebooks/261008_GIS_sgis2024_master_merge.ipynb`의 전체 셀을 실행합니다.
+누락된 결합 마스터 생성 단계의 [입력 배치·실행 명령·산출 경로](docs/sgis_master_reproduction.md)를 참고하세요.
+병합 CSV·값 상태표·변수사전은 `data/interim/1차 merge/`, 최종 203열 마스터는 `data/processed/`에 생성됩니다.
+
 ## 디렉터리 구조
 
 ```text
