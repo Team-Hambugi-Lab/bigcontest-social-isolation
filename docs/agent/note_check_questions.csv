@@ -1,0 +1,45 @@
+﻿FEATURE_CODE,TAG,PRIORITY,QUESTION,PASS_IF
+REL_NO_CONFIDANT,SOCIAL_PART,1,마음 편히 이야기할 사람을 만날 수 있는 모임이나 프로그램에 관심이 있으세요?,관심 있다고 답함
+REL_NO_CONFIDANT,ISOLATION_CARE,2,혼자 지내는 어려움을 전문적으로 도와주는 곳과 상담해 보실 생각이 있으세요?,상담 의사가 있다고 답함
+REL_NO_ADVICE,CASE_MGMT,1,요즘 생활이나 복지 문제로 의논하고 싶은 일이 있으세요?,의논할 생활·복지 문제가 있다고 답함
+REL_NO_ADVICE,SOCIAL_PART,2,꾸준히 만나는 사람을 만들 수 있는 모임에 관심이 있으세요?,관심 있다고 답함
+REL_FAMILY_CONFLICT,FAMILY,1,가족 관계에 대해 상담을 받아 보실 생각이 있으세요?,상담 의사가 있다고 답함
+REL_NO_FAMILY,SOCIAL_PART,1,가족 말고 다른 사람들과 어울릴 수 있는 모임에 관심이 있으세요?,관심 있다고 답함
+REL_NO_FAMILY,CASE_MGMT,2,도움을 부탁할 가족이 없어서 생활이나 복지 상담이 필요하세요?,생활 지원 또는 복지 상담이 필요하다고 답함
+REL_LONELY,SOCIAL_PART,1,외로움을 덜 수 있게 사람들과 어울리는 프로그램에 관심이 있으세요?,관심 있다고 답함
+REL_LONELY,MENTAL_CARE,2,외로움 때문에 마음이 힘들어서 상담을 받아 보실 생각이 있으세요?,상담 의사가 있다고 답함
+REL_NO_PRACTICAL_SUPPORT,CARE_CHECK,1,아플 때 안부를 확인하거나 생활을 도와주는 서비스가 필요하세요?,필요하다고 답함
+REL_NO_PRACTICAL_SUPPORT,CASE_MGMT,2,생활 지원을 신청할 곳을 안내받고 싶으세요?,신청 창구 안내를 원한다고 답함
+REL_LOW_CONTACT,SOCIAL_PART,1,사람들과 만날 기회를 늘리고 싶으세요?,늘리고 싶다고 답함
+REL_LOW_CONTACT,ISOLATION_CARE,2,혼자 지내는 어려움을 전문적으로 도와주는 곳과 상담해 보실 생각이 있으세요?,상담 의사가 있다고 답함
+OUT_LONG_DURATION,ISOLATION_CARE,1,오래 집에 머무른 분들을 돕는 기관과 상담해 보실 생각이 있으세요?,상담 의사가 있다고 답함
+OUT_LONG_DURATION,SOCIAL_PART,2,조금씩 밖에서 하는 활동을 시작해 볼 생각이 있으세요?,외부 활동을 시작할 의사가 있다고 답함
+OUT_NO_ACTIVITY,SOCIAL_PART,1,일상에서 할 활동이나 사람들과 어울릴 거리를 찾고 싶으세요?,찾고 싶다고 답함
+OUT_NO_ACTIVITY,LEARNING,2,배우거나 즐길 수 있는 강좌·문화 활동에 관심이 있으세요?,관심 있다고 답함
+OUT_NO_ACTIVITY,PHYSICAL,3,운동이나 몸을 움직이는 활동을 해 보고 싶으세요? 건강상 무리가 없으세요?,원한다고 답하고 건강상 무리가 없다고 답함
+SOLO_LIVING,CARE_CHECK,1,혼자 지내시면서 안부 확인이나 생활 도움이 필요하세요?,필요하다고 답함
+SOLO_LIVING,SOCIAL_PART,2,평소 사람들과 어울릴 기회를 더 갖고 싶으세요?,갖고 싶다고 답함
+SOLO_MEAL,SOCIAL_PART,1,다른 사람과 함께 식사하거나 어울리는 프로그램에 관심이 있으세요?,관심 있다고 답함
+SOLO_MEAL,MEAL,2,끼니를 챙기거나 식품을 구하기 어려우세요?,식사·식품 확보가 어렵다고 답함
+BODY_POOR_HEALTH,HEALTH_MGMT,1,건강 상담이나 관리를 받아 보실 생각이 있으세요?,상담·관리 의사가 있다고 답함
+BODY_POOR_HEALTH,DISABILITY,2,장애 관련 지원이 필요하세요? 장애 등록이나 관련 판정을 받으셨어요?,지원이 필요하다고 답하고 이용 자격이 있다고 답함
+BODY_HYGIENE,CARE_CHECK,1,씻기나 옷 갈아입기 같은 일에 실제로 도움을 받고 싶으세요?,도움을 원한다고 답함
+BODY_HYGIENE,HEALTH_MGMT,2,씻기 어려운 데 건강상 이유가 있다면 상담을 받아 보실 생각이 있으세요?,상담 의사가 있다고 답함
+BODY_HOME_CARE,CARE_CHECK,1,방 정리나 집안일에 도움을 받고 싶으세요?,도움을 원한다고 답함
+BODY_HOME_CARE,CASE_MGMT,2,가사 지원을 신청할 수 있는 곳을 안내받고 싶으세요?,신청 창구 안내를 원한다고 답함
+BODY_SLEEP,HEALTH_MGMT,1,잠 문제로 건강 상담을 받아 보실 생각이 있으세요?,상담 의사가 있다고 답함
+BODY_MOBILITY_LIMIT,CARE_CHECK,1,외출하거나 이동할 때 동행 같은 도움을 받고 싶으세요?,도움을 원한다고 답함
+BODY_MOBILITY_LIMIT,HEALTH_MGMT,2,거동이 불편한 이유에 대해 건강 상담을 받아 보실 생각이 있으세요?,상담 의사가 있다고 답함
+MIND_POOR_MENTAL,MENTAL_CARE,1,마음 건강에 대해 상담을 받아 보실 생각이 있으세요?,상담 의사가 있다고 답함
+MIND_HOPELESS,MENTAL_CARE,1,힘든 마음에 대해 상담을 받아 보실 생각이 있으세요?,상담 의사가 있다고 답함. 이 문항 전에 자살 생각 여부를 따로 묻고 있다고 답하면 위기 경로로 간다
+MIND_SOCIAL_ANXIETY,MENTAL_CARE,1,사람 만나는 것이 불안한 마음에 대해 상담을 받아 보실 생각이 있으세요?,상담 의사가 있다고 답함
+MIND_SUICIDE_IDEA,CRISIS_LINE,1,(묻지 않음),위기 경로: 일반 추천을 건너뛰고 사람에게 즉시 이관하며 위기 상담 안내
+MIND_SUICIDE_IDEA,MENTAL_CARE,2,(에이전트가 묻지 않음),위기 이관 이후 담당자가 지속 상담 연계를 정함
+MIND_SUICIDE_ATTEMPT,CRISIS_LINE,1,(묻지 않음),위기 경로: 일반 추천을 건너뛰고 사람에게 즉시 이관하며 위기 상담 안내
+MIND_SUICIDE_ATTEMPT,MENTAL_CARE,2,(에이전트가 묻지 않음),위기 이관 이후 담당자가 지속 상담 연계를 정함
+ECON_NO_INCOME,JOB_INCOME,1,일자리를 찾거나 일을 다시 시작할 생각이 있으세요?,취업·자활 의사가 있다고 답함. 은퇴·연금생활이라는 답만으로는 통과하지 않음
+ECON_NO_INCOME,CASE_MGMT,2,생활비가 부족하거나 복지 신청이 필요하세요?,생활비 부족 또는 복지 신청 필요가 있다고 답함
+ECON_LOW_STATUS,CASE_MGMT,1,경제적으로 어려워서 복지 상담이 필요하세요?,경제적 어려움과 지원 필요가 있다고 답함
+ECON_LOW_STATUS,JOB_INCOME,2,일자리를 찾거나 일을 다시 시작할 생각이 있으세요?,취업·자활 의사가 있다고 답함
+HOUSE_UNSTABLE,HOUSING,1,지금 사는 곳 때문에 주거 상담이나 지원이 필요하세요?,주거 상담·지원이 필요하다고 답함
+HOUSE_UNSTABLE,CASE_MGMT,2,집 문제와 함께 다른 생활 문제도 같이 상담받고 싶으세요?,복합 생활 지원이 필요하다고 답함

@@ -140,7 +140,7 @@
 #### 결측과 미매핑
 
 - `SUPPORT_NEED_PCT`는 전 행 공란이다. S1의 청소·세탁 11.5%, 외출동행 8.4%, 일자리상담 15.6%는 ‘매우 필요함’ 비율로 확인되지 않아 옮기지 않았다. 원래 수치는 근거 파일에 남겼다.
-- `INSTITUTION_TAGS`는 **S9 범주 매핑을 상속한 후보**다. 최종 승인·무조건 추천 값이 아니다. `feature_tag_mapping_a2_draft.csv`의 39행에 출처 우선순위와 적용 조건을 기록했다. 일반 정신건강 어려움에 중독 태그를 자동 연결하거나, 고령이라는 이유로 치매 서비스를 연결해서는 안 된다. `SUPPORT_TYPES`는 지원 유형 제안이며 기관 서비스 태그와 다른 층이다.
+- A-2 검토 당시의 `INSTITUTION_TAGS` 후보는 **S9 범주 매핑을 상속한 초안**이었다. `feature_tag_mapping_a2_draft.csv`의 39행은 최종 매핑이 아니다. #18 최종 연결은 24개 세부 특징의 [서비스 태그 매핑](resource-tags.md)과 `data/processed/feature_tag_mapping.csv`(44행)를 따른다. 일반 정신건강 어려움에 중독 태그를 자동 연결하거나, 고령이라는 이유로 치매 서비스를 연결해서는 안 된다. `SUPPORT_TYPES`는 지원 유형 제안이며 기관 서비스 태그와 다른 층이다.
 - 제시되지 않은 고령 세부 문항의 비율을 청년 값으로 대체하지 않았다.
 
 ### BODY 범주 의견
@@ -198,7 +198,7 @@ S2 p.10은 2023년 수급자 1,413명·41.4%를 함께 제시하지만, 1,413/3,
 ### 병합 시 남은 연결 작업
 
 1. **A-1:** 실제 `risk_features_youth.csv`와 정의·응답 범주를 대조한다. OUT 무위 생활, ECON 주관적 경제 수준, HOUSE 두 거처 유형, REL 속마음 공유의 정확한 문항이 우선이다. `feature_merge_review.csv`에 12개 특징의 직접·관련 근거와 운영 상태를 적었다.
-2. **#18:** 현재 39행은 범주 매핑 상속 초안이다. 조건·대상 연령·실제 서비스·운영 상태를 확인해 특징 단위 최종 매핑으로 확정한다. 지원 욕구 비율을 `SUPPORT_NEED_PCT`로 대체하지 않는다.
+2. **#18:** 39행 범주 상속 초안을 검토하고, 24개 세부 특징에 대한 44행 후보 매핑으로 교체했다. 조건·대상 연령·실제 서비스·운영 상태를 확인하는 추천 절차는 #19에서 정한다. 지원 욕구 비율을 `SUPPORT_NEED_PCT`로 대체하지 않는다.
 3. **#19:** OUT와 주관적 경제 수준의 개인 질문·기간·해당 응답을 확정한다. 은퇴·연금생활의 무소득활동, 신규 코드 분할이 특징 개수에 미치는 영향과 지원 비율 결측 시 정렬 정책을 정한다. 동의 거부·미응답은 0이나 위험으로 세지 않는다.
 4. **#13·#16:** 사전 코드와 노출 차원, 유동 이중 반영, 제외·보류 상태를 맞춘다. 지역 신호는 개인 티어를 올리지 않는다.
 5. **공유:** 근거 문서는 레포, CSV·열 설명은 드라이브에 배치하고 이슈에 실제 링크·행열수·생성 커밋을 남겨야 한다. 현재 산출물은 로컬 검토본이다. 신규 코드 3개는 팀 합의 전 채택하지 않는다.
@@ -407,12 +407,12 @@ S2 p.10은 2023년 수급자 1,413명·41.4%를 함께 제시하지만, 1,413/3,
 
 ## 병합 사전 (`data/processed/risk_feature_dictionary.csv`)
 
-생성 코드: `uv run python -m src.features.risk_feature_dictionary`. 드라이브: [`risk_feature_dictionary.csv`](https://drive.google.com/file/d/1q6OgUqoZlpp2R9ua3YR7MRHPaSg8woPe/view)(24 × 12), [열 설명](https://drive.google.com/file/d/1PE_mQqgme8y69Dlm5NmUGmazs_sgdrnN/view). 입력은 `data/interim/`의 `risk_feature_dictionary_youth.csv`, `risk_features_youth.csv`, `risk_features_senior.csv`다.
+생성 코드: `uv run python -m src.features.risk_feature_dictionary`. 드라이브: [`risk_feature_dictionary.csv`](https://drive.google.com/file/d/1XwtjxBjyywIk4j4cI4jzYBSr53bqeVB6/view)(24 × 12), [열 설명](https://drive.google.com/file/d/1PE_mQqgme8y69Dlm5NmUGmazs_sgdrnN/view). 입력은 `data/interim/`의 `risk_feature_dictionary_youth.csv`, `risk_features_youth.csv`, `risk_features_senior.csv`다. 2026-10-24의 #18 태그 갱신을 로컬 `data/processed/`와 위 Drive 파일에 반영했다.
 
 - **행:** 10/20에 확정한 21개 코드와 10/22에 채택한 A-2 제안 코드 3개, 모두 24행이다. 고령 12개는 모두 21개 코드 안에 있다. 연령별로 다른 점은 범주를 나누지 않고 `AGE_PATTERN`에 적는다.
 - **청년 값을 쓰는 열:** `FEATURE_NAME`, `DEFINITION`, `DETECT_DATA`, `IS_CRISIS`, `SUPPORT_TYPES`, `SUPPORT_NEED_PCT`. 정의는 10/20 확정본이고, `SUPPORT_NEED_PCT`는 실태조사 "매우 필요함" 비율이라 같은 문항이 없는 고령 지원 제안은 넣지 않는다(고령 제안은 `risk_features_senior.csv`).
 - **연령대별로 잇는 열:** `AGE_PATTERN`, `EVIDENCE_SOURCE`, `EVIDENCE_VALUE`, `DETECT_RULE`. `[청년] … [고령·중장년] …` 형식이고, 고령 근거가 없는 9개는 `AGE_PATTERN`에 "A-2 근거 없음"으로 적는다.
-- **비워 둔 열:** `INSTITUTION_TAGS`는 #18에서 채운다. A-2 태그 후보는 `feature_tag_mapping_a2_draft.csv`에 있다.
+- **기관 후보 열:** `INSTITUTION_TAGS`는 #18의 44행 매핑에서 특징별 `PRIORITY` 순으로 채운다. A-2의 `feature_tag_mapping_a2_draft.csv`는 검토용 초안으로 남긴다. 후보 태그만으로 기관 이용 자격이나 추천을 확정하지 않는다.
 - **A-2 제안 코드 3개(10/22 채택):** `REL_NO_PRACTICAL_SUPPORT`(아플 때 도와줄 사람 없음), `REL_LOW_CONTACT`(사회적 교류 드묾), `BODY_MOBILITY_LIMIT`(이동·외출 수행 어려움). 사전은 지금 감지하는 특징의 표라 청년 근거가 없어도 코드를 둔다. 이름·정의·감지 방법은 `proposed_senior_features.csv`를 따르고, 같은 범주의 마지막 행 뒤에 넣는다.
   - 청년 근거는 `REL_LOW_CONTACT`에만 있다. 서울시 `A11`(2주 교류 0회, 고립·은둔 26.8% 대 전체 청년 3.4%)은 교류 빈도 문항이라 `REL_NO_CONFIDANT`에서 이 코드로 옮겼다. 나머지 둘은 "청년 실태조사 근거 없음"으로 적는다.
   - 보건복지부 문항이 없어 세 코드의 `SUPPORT_TYPES`·`SUPPORT_NEED_PCT`는 비어 있다. 비어 있을 때의 정렬은 #19에서 정한다.
@@ -443,4 +443,4 @@ S2 p.10은 2023년 수급자 1,413명·41.4%를 함께 제시하지만, 1,413/3,
 
 - 김성아 외(2023) 보고서 부록의 고립·은둔 판정 기준 원문, 서울특별시(2022) 원 보고서의 `KEY_1`·`QCL_3` 정의
 - 서울연구원 PDF 14쪽 [표 3-3] 오즈비 원문 대조
-- `DETECT_RULE` 숫자 기준(#13·#24, #16), `INSTITUTION_TAGS`(#18)
+- `DETECT_RULE` 숫자 기준(#13·#24, #16), 후보 기관의 조건 확인·추천 운영 규칙(#19)
