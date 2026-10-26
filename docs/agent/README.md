@@ -17,7 +17,7 @@
 - 무응답만으로 티어를 올리지 않도록 4절 신호 표를 고쳤다. 무응답 종류별 처리는 미결정으로 남겼다.
 - 7절 남은 결정 표에 리뷰 코멘트 4·5번 항목과 이슈 본문 규칙 3(`SUPPORT_NEED_PCT`)과의 관계를 더했다.
 
-**매핑 기준 (#18 확정, 2026-10-24).** 커밋 [`84c4d17`](https://github.com/Team-Hambugi-Lab/bigcontest-social-isolation/commit/84c4d17662cfe31db23d9fb17afdb131d6da8f10)과 Drive [`processed`](https://drive.google.com/drive/folders/1ZJSRH3QHwyCUBdIqnYVmvJlQCZgtUHWp)의 [`feature_tag_mapping.csv`](https://drive.google.com/file/d/1cTdXGTgujsyTPuqtLmJnGxo4wVXVPrY8/view)·[`risk_feature_dictionary.csv`](https://drive.google.com/file/d/1q6OgUqoZlpp2R9ua3YR7MRHPaSg8woPe/view)를 기준으로 삼는다. 위험 특징 24개에 후보 연결 44개(태그 14종 사용)다. 태그·매핑 설명은 [`resource-tags.md`](resource-tags.md)를 본다. v1.1까지의 범주 단위 매핑 예시(SOLO, REL 등 7개 범주)는 현재 결과가 아니다. 이 문서는 #18의 매핑과 태그 정의를 바꾸지 않는다.
+**매핑 기준 (#18 확정, 2026-10-24).** 커밋 [`84c4d17`](https://github.com/Team-Hambugi-Lab/bigcontest-social-isolation/commit/84c4d17662cfe31db23d9fb17afdb131d6da8f10)과 Drive [`processed`](https://drive.google.com/drive/folders/1ZJSRH3QHwyCUBdIqnYVmvJlQCZgtUHWp)의 [`feature_tag_mapping.csv`](https://drive.google.com/file/d/1cTdXGTgujsyTPuqtLmJnGxo4wVXVPrY8/view)·[`risk_feature_dictionary.csv`](https://drive.google.com/file/d/1XwtjxBjyywIk4j4cI4jzYBSr53bqeVB6/view)를 기준으로 삼는다. 위험 특징 24개에 후보 연결 44개(태그 14종 사용)다. 태그·매핑 설명은 [`resource-tags.md`](resource-tags.md)를 본다. v1.1까지의 범주 단위 매핑 예시(SOLO, REL 등 7개 범주)는 현재 결과가 아니다. 이 문서는 #18의 매핑과 태그 정의를 바꾸지 않는다.
 
 **v1.2 변경 요약**
 

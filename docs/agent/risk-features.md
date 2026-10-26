@@ -407,7 +407,7 @@ S2 p.10은 2023년 수급자 1,413명·41.4%를 함께 제시하지만, 1,413/3,
 
 ## 병합 사전 (`data/processed/risk_feature_dictionary.csv`)
 
-생성 코드: `uv run python -m src.features.risk_feature_dictionary`. 드라이브: [`risk_feature_dictionary.csv`](https://drive.google.com/file/d/1q6OgUqoZlpp2R9ua3YR7MRHPaSg8woPe/view)(24 × 12), [열 설명](https://drive.google.com/file/d/1PE_mQqgme8y69Dlm5NmUGmazs_sgdrnN/view). 입력은 `data/interim/`의 `risk_feature_dictionary_youth.csv`, `risk_features_youth.csv`, `risk_features_senior.csv`다. 2026-10-24의 #18 태그 갱신을 로컬 `data/processed/`와 위 Drive 파일에 반영했다.
+생성 코드: `uv run python -m src.features.risk_feature_dictionary`. 드라이브: [`risk_feature_dictionary.csv`](https://drive.google.com/file/d/1XwtjxBjyywIk4j4cI4jzYBSr53bqeVB6/view)(24 × 12), [열 설명](https://drive.google.com/file/d/1PE_mQqgme8y69Dlm5NmUGmazs_sgdrnN/view). 입력은 `data/interim/`의 `risk_feature_dictionary_youth.csv`, `risk_features_youth.csv`, `risk_features_senior.csv`다. 2026-10-24의 #18 태그 갱신을 로컬 `data/processed/`와 위 Drive 파일에 반영했다.
 
 - **행:** 10/20에 확정한 21개 코드와 10/22에 채택한 A-2 제안 코드 3개, 모두 24행이다. 고령 12개는 모두 21개 코드 안에 있다. 연령별로 다른 점은 범주를 나누지 않고 `AGE_PATTERN`에 적는다.
 - **청년 값을 쓰는 열:** `FEATURE_NAME`, `DEFINITION`, `DETECT_DATA`, `IS_CRISIS`, `SUPPORT_TYPES`, `SUPPORT_NEED_PCT`. 정의는 10/20 확정본이고, `SUPPORT_NEED_PCT`는 실태조사 "매우 필요함" 비율이라 같은 문항이 없는 고령 지원 제안은 넣지 않는다(고령 제안은 `risk_features_senior.csv`).
