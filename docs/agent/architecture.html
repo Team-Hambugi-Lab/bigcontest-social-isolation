@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>Agent Architecture</title>
+<style>
+  body{margin:0;background:#fff}
+  svg{font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif}
+  .t{font-size:13px;fill:#333}
+  .s{font-size:12px;fill:#666}
+  .h{font-size:14px;font-weight:700;fill:#222}
+  .b{font-size:15px;font-weight:700;fill:#fff}
+  .n{font-size:13px;font-weight:700;fill:#fff}
+  .ln{stroke:#222;stroke-width:1.6;fill:none}
+  .dash{stroke-dasharray:6 5}
+</style></head><body>
+<svg xmlns="http://www.w3.org/2000/svg" width="1560" height="1010" viewBox="0 0 1560 1010">
+<defs>
+  <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#222"/></marker>
+</defs>
+
+<text x="30" y="34" style="font-size:22px;font-weight:700;fill:#111">고립 예방 AI 에이전트 아키텍처 (사용자 흐름 기준)</text>
+
+<!-- 그룹 -->
+<rect x="290" y="56" width="570" height="450" rx="10" fill="#EEF0F3" stroke="#B8BEC8"/>
+<text x="306" y="82" class="h">① 위험 탐지·판단 로직</text>
+<rect x="890" y="56" width="310" height="450" rx="10" fill="#E8F2EC" stroke="#4E8F7A" stroke-width="1.5"/>
+<text x="950" y="82" class="h">② 복지자원 추천 체계</text>
+<rect x="1230" y="56" width="310" height="450" rx="10" fill="#fff" stroke="#B0435F" stroke-dasharray="7 6" stroke-width="1.3"/>
+<text x="1246" y="82" class="h">③ 대응 프로세스 (외부 연계)</text>
+<rect x="290" y="540" width="910" height="225" rx="10" fill="#EEF1FA" stroke="#4F6FD0" stroke-width="1.3"/>
+<text x="306" y="752" class="h">④ 지역·인구집단 층 (관찰 우선 지역 · 대회 제공 데이터)</text>
+
+<!-- 사용자 -->
+<circle cx="62" cy="262" r="10" fill="none" stroke="#333" stroke-width="2"/>
+<circle cx="84" cy="262" r="10" fill="none" stroke="#999" stroke-width="2"/>
+<path d="M44,296 Q62,274 80,296" fill="none" stroke="#333" stroke-width="2"/>
+<text x="46" y="318" class="t">사용자</text>
+
+<!-- 박스: 앱, LLM -->
+<rect x="140" y="240" width="84" height="84" rx="8" fill="#7C5CDB"/><text x="182" y="287" class="b" text-anchor="middle">APP</text>
+<text x="182" y="342" class="t" text-anchor="middle">앱 · 대화형 UI</text>
+<rect x="140" y="400" width="84" height="84" rx="8" fill="#C8763A"/><text x="182" y="447" class="b" text-anchor="middle">LLM</text>
+<text x="182" y="502" class="t" text-anchor="middle">대화 생성·설명문</text>
+<text x="182" y="519" class="s" text-anchor="middle">(판단은 규칙이 함)</text>
+
+<!-- ① 탐지·판단 -->
+<rect x="330" y="140" width="84" height="84" rx="8" fill="#3F8A80"/><text x="372" y="187" class="b" text-anchor="middle">온보딩</text>
+<text x="330" y="240" class="t">온보딩 · 분류</text><text x="330" y="256" class="s">특징 코드, 거주지·연령, 동의</text>
+<rect x="330" y="370" width="84" height="84" rx="8" fill="#3F8A80"/><text x="372" y="417" class="b" text-anchor="middle">관찰</text>
+<text x="424" y="400" class="t">지속 관찰 (축별)</text><text x="424" y="416" class="s">체크인 · 무응답</text><text x="424" y="431" class="s">이동 요약(동의자)</text>
+<rect x="600" y="110" width="84" height="84" rx="8" fill="#6B7280"/><text x="642" y="157" class="b" text-anchor="middle">사전</text>
+<text x="694" y="140" class="t">위험 특징 사전</text><text x="694" y="156" class="s">SOLO · REL · OUT</text><text x="694" y="171" class="s">MIND · ECON · HOUSE</text>
+<rect x="600" y="250" width="84" height="84" rx="8" fill="#3F8A80"/><text x="642" y="297" class="b" text-anchor="middle">판단</text>
+<text x="694" y="214" class="t">위험 판단</text><text x="694" y="230" class="s">티어(수준) +</text><text x="694" y="245" class="s">본인 기준선 이상치(변화)</text>
+<rect x="600" y="390" width="84" height="84" rx="8" fill="#6B7280"/><text x="642" y="437" class="b" text-anchor="middle">DB</text>
+<text x="694" y="420" class="t">사용자 DB</text><text x="694" y="436" class="s">프로필 · 신호 이력 · 동의</text>
+
+<!-- ② 추천 -->
+<rect x="920" y="110" width="84" height="84" rx="8" fill="#5B8E3E"/><text x="962" y="157" class="b" text-anchor="middle">추천</text>
+<text x="1014" y="140" class="t">추천 · 연계</text><text x="1014" y="156" class="s">특징별 후보(PRIORITY) → NOTE 확인</text><text x="1014" y="171" class="s">지역·대상·운영 상태 → 다음 후보</text>
+<rect x="920" y="250" width="84" height="84" rx="8" fill="#6B7280"/><text x="962" y="297" class="b" text-anchor="middle">자원</text>
+<text x="1014" y="280" class="t">기관 DB · 지원사업</text><text x="1014" y="296" class="s">기관 17,925 · 사업 60</text><text x="1014" y="311" class="s">서비스 태그 16종</text>
+<rect x="920" y="390" width="84" height="84" rx="8" fill="#5B8E3E"/><text x="962" y="437" class="b" text-anchor="middle">후속</text>
+<text x="1014" y="420" class="t">후속 확인</text><text x="1014" y="436" class="s">이용 여부 · 효과</text><text x="1014" y="451" class="s">→ 재분류</text>
+
+<!-- ③ 외부 -->
+<rect x="1250" y="110" width="84" height="84" rx="8" fill="#B0435F"/><text x="1292" y="157" class="b" text-anchor="middle">기관</text>
+<text x="1344" y="140" class="t">복지기관</text><text x="1344" y="156" class="s">행정복지센터 · 복지관</text><text x="1344" y="171" class="s">프로그램 · 사례관리</text>
+<rect x="1250" y="250" width="84" height="84" rx="8" fill="#B0435F"/><text x="1292" y="297" class="b" text-anchor="middle">위기</text>
+<text x="1344" y="280" class="t">위기 대응</text><text x="1344" y="296" class="s">109 · 위기 상담 기관</text><text x="1344" y="311" class="s">지정 담당자 즉시 이관</text>
+<rect x="1250" y="390" width="84" height="84" rx="8" fill="#B0435F"/><text x="1292" y="437" class="b" text-anchor="middle">지자체</text>
+<text x="1344" y="420" class="t">자원 공백 보고</text><text x="1344" y="436" class="s">프로그램 개설 제안</text><text x="1344" y="451" class="s">미가입 주민 발굴</text>
+
+<!-- ④ 지역 층 -->
+<rect x="330" y="590" width="84" height="84" rx="8" fill="#4F6FD0"/><text x="372" y="637" class="b" text-anchor="middle">SK</text>
+<text x="372" y="694" class="t" text-anchor="middle">유동인구</text><text x="372" y="710" class="s" text-anchor="middle">성·연령·시간대</text>
+<rect x="460" y="590" width="84" height="84" rx="8" fill="#4F6FD0"/><text x="502" y="637" class="b" text-anchor="middle">카드</text>
+<text x="502" y="694" class="t" text-anchor="middle">신한카드</text><text x="502" y="710" class="s" text-anchor="middle">시군구·연령 소비</text>
+<rect x="590" y="590" width="84" height="84" rx="8" fill="#4F6FD0"/><text x="632" y="637" class="b" text-anchor="middle">SGIS</text>
+<text x="632" y="694" class="t" text-anchor="middle">공공 통계</text><text x="632" y="710" class="s" text-anchor="middle">인구·가구·주택</text>
+<rect x="770" y="590" width="84" height="84" rx="8" fill="#3F5BB8"/><text x="812" y="637" class="b" text-anchor="middle">산출</text>
+<text x="812" y="694" class="t" text-anchor="middle">지역 비교</text><text x="812" y="710" class="s" text-anchor="middle">노출 지수 · 활동 신호 나란히</text>
+<rect x="960" y="590" width="84" height="84" rx="8" fill="#3F5BB8"/><text x="1002" y="637" class="b" text-anchor="middle">우선</text>
+<text x="1002" y="694" class="t" text-anchor="middle">관찰 우선 지역</text><text x="1002" y="710" class="s" text-anchor="middle">개인 티어는 안 바꿈</text>
+<path class="ln" d="M414,632 L458,632" marker-end="url(#a)"/>
+<path class="ln" d="M544,632 L588,632" marker-end="url(#a)"/>
+<path class="ln" d="M674,632 L768,632" marker-end="url(#a)"/>
+<path class="ln" d="M854,632 L958,632" marker-end="url(#a)"/>
+
+<!-- 화살표 -->
+<!-- 1 사용자 → 앱 -->
+<path class="ln" d="M100,282 L138,282" marker-end="url(#a)"/>
+<!-- 2 앱 → 온보딩 -->
+<path class="ln" d="M224,262 L270,262 L270,182 L328,182" marker-end="url(#a)"/>
+<!-- 3 온보딩 ↔ 사전 -->
+<path class="ln" d="M414,160 L598,160" marker-start="url(#a)" marker-end="url(#a)"/>
+<!-- 4 앱 → 관찰 -->
+<path class="ln" d="M224,302 L270,302 L270,412 L328,412" marker-end="url(#a)"/>
+<!-- 5 관찰 → 판단, 온보딩 → 판단 -->
+<path class="ln" d="M414,445 L555,445 L555,300 L598,300" marker-end="url(#a)"/>
+<path class="ln" d="M414,205 L520,205 L520,280 L598,280" marker-end="url(#a)"/>
+<!-- 판단 ↔ DB -->
+<path class="ln" d="M642,334 L642,388" marker-start="url(#a)" marker-end="url(#a)"/>
+<!-- 6 판단 → 추천 -->
+<path class="ln" d="M684,265 L880,265 L880,152 L918,152" marker-end="url(#a)"/>
+<!-- 7 추천 ↔ 자원 -->
+<path class="ln" d="M962,194 L962,248" marker-start="url(#a)" marker-end="url(#a)"/>
+<!-- 8 추천 → 기관 / 추천 → 앱 -->
+<path class="ln" d="M1004,124 L1248,124" marker-end="url(#a)"/>
+<path class="ln dash" d="M935,110 L935,46 L182,46 L182,238" marker-end="url(#a)"/>
+<!-- 기관 → 후속 -->
+<path class="ln dash" d="M1292,194 L1292,224 L1215,224 L1215,465 L1006,465" marker-end="url(#a)"/>
+<!-- 9 판단 → 위기 -->
+<path class="ln dash" d="M684,315 L860,315 L860,522 L1220,522 L1220,292 L1248,292" marker-end="url(#a)"/>
+<!-- 10 후속 → 관찰 (루프) -->
+<path class="ln" d="M920,450 L875,450 L875,492 L350,492 L350,456" marker-end="url(#a)"/>
+<!-- 11 우선 → 관찰 빈도 -->
+<path class="ln dash" d="M1002,590 L1002,565 L395,565 L395,456" marker-end="url(#a)"/>
+<!-- 12 우선 → 지자체 -->
+<path class="ln dash" d="M1044,632 L1292,632 L1292,476" marker-end="url(#a)"/>
+
+<!-- 번호 -->
+<g>
+  <circle cx="118" cy="262" r="12" fill="#111"/><text x="118" y="267" class="n" text-anchor="middle">1</text>
+  <circle cx="250" cy="182" r="12" fill="#111"/><text x="250" y="187" class="n" text-anchor="middle">2</text>
+  <circle cx="506" cy="142" r="12" fill="#111"/><text x="506" y="147" class="n" text-anchor="middle">3</text>
+  <circle cx="250" cy="412" r="12" fill="#111"/><text x="250" y="417" class="n" text-anchor="middle">4</text>
+  <circle cx="555" cy="380" r="12" fill="#111"/><text x="555" y="385" class="n" text-anchor="middle">5</text>
+  <circle cx="790" cy="265" r="12" fill="#111"/><text x="790" y="270" class="n" text-anchor="middle">6</text>
+  <circle cx="944" cy="221" r="12" fill="#111"/><text x="944" y="226" class="n" text-anchor="middle">7</text>
+  <circle cx="1126" cy="106" r="12" fill="#111"/><text x="1126" y="111" class="n" text-anchor="middle">8</text>
+  <circle cx="1040" cy="522" r="12" fill="#B0435F"/><text x="1040" y="527" class="n" text-anchor="middle">9</text>
+  <circle cx="610" cy="492" r="12" fill="#111"/><text x="610" y="497" class="n" text-anchor="middle">10</text>
+  <circle cx="700" cy="565" r="12" fill="#111"/><text x="700" y="570" class="n" text-anchor="middle">11</text>
+  <circle cx="1160" cy="632" r="12" fill="#111"/><text x="1160" y="637" class="n" text-anchor="middle">12</text>
+</g>
+<text x="600" y="40" class="s">추천 결과 전달</text>
+<text x="1120" y="240" class="s">이용 결과</text>
+<text x="1060" y="535" class="s" style="fill:#B0435F">위기 시 즉시</text>
+<text x="420" y="582" class="s">해당 지역·계층 관찰 빈도↑</text>
+
+<!-- 범례 -->
+<g transform="translate(1330,560)">
+  <rect x="0" y="0" width="14" height="14" fill="#3F8A80"/><text x="22" y="12" class="s">탐지·판단 모듈</text>
+  <rect x="0" y="24" width="14" height="14" fill="#5B8E3E"/><text x="22" y="36" class="s">추천 모듈</text>
+  <rect x="0" y="48" width="14" height="14" fill="#6B7280"/><text x="22" y="60" class="s">저장소</text>
+  <rect x="0" y="72" width="14" height="14" fill="#B0435F"/><text x="22" y="84" class="s">외부 기관·사람</text>
+  <rect x="0" y="96" width="14" height="14" fill="#4F6FD0"/><text x="22" y="108" class="s">대회 제공·공공 데이터</text>
+  <line x1="0" y1="132" x2="34" y2="132" class="ln"/><text x="42" y="136" class="s">실선 = 매 사용자 흐름</text>
+  <line x1="0" y1="154" x2="34" y2="154" class="ln dash"/><text x="42" y="158" class="s">점선 = 조건부·주기</text>
+  <text x="0" y="186" class="s">개인 흐름(1~10): 페르소나 시연</text>
+  <text x="0" y="202" class="s">추천 자원 DB · 지역 층: 실데이터</text>
+</g>
+
+<!-- 단계 설명 -->
+<line x1="30" y1="790" x2="1530" y2="790" stroke="#ddd"/>
+<g class="t">
+  <text x="40" y="820">1 사용자가 앱에서 대화형 온보딩 시작</text>
+  <text x="40" y="846">2 앱 → 온보딩: 응답과 동의(체크인·이동 요약·기관 연계) 전달</text>
+  <text x="40" y="872">3 응답을 위험 특징 사전으로 분류 → 특징 코드 부여</text>
+  <text x="40" y="898">4 체크인 응답 · 무응답 · 이동 요약값(동의자)을 지속 수집</text>
+  <text x="40" y="924">5 위험 판단: 해당 범주 수로 티어 + 본인 기준선 대비 악화 (개인 자료만)</text>
+  <text x="40" y="950">6 판단 → 추천: 특징 코드와 티어 전달</text>
+  <text x="560" y="820">7 특징별 후보 순서대로 조건·의사 확인 → 기관·모집 중 사업 거름</text>
+  <text x="560" y="846">8 추천을 앱에 전달, 동의 시 기관에 연계 요청</text>
+  <text x="560" y="872" style="fill:#B0435F">9 위기 특징(IS_CRISIS) → 추천 생략, 사람에게 이관 + 위기 상담 안내</text>
+  <text x="560" y="898">10 후속 확인(이용 · 효과) → 관찰로 돌아가 재분류</text>
+  <text x="560" y="924">11 관찰 우선 지역·계층 → 해당 사용자 관찰 빈도↑ (티어 불변)</text>
+  <text x="560" y="950">12 미가입 주민 발굴, 지역×태그 기관 0곳이면 자원 공백 보고</text>
+</g>
+<!-- 시나리오 -->
+<rect x="1080" y="805" width="450" height="160" rx="8" fill="#FAFAFA" stroke="#ccc"/>
+<text x="1096" y="830" class="h">활용 시나리오 (페르소나 예시)</text>
+<text x="1096" y="856" class="s">춘천 70대 1인 남성 — SOLO_LIVING · REL_LOW_CONTACT, 범주 2개 → 티어 1</text>
+<text x="1096" y="879" class="s">2주 연속 외출이 기준선 절반 이하 → 티어 1→2 (가정)</text>
+<text x="1096" y="902" class="s">모임 참여 의사 확인 → SOCIAL_PART 1순위, 노인복지관 · 경로당</text>
+<text x="1096" y="925" class="s">고립 전담(2순위)은 춘천에 없음, 2주 뒤 이용 여부 확인</text>
+<text x="1096" y="948" class="s">효자2동이 관찰 우선 지역 → 관찰 빈도↑, 티어는 그대로</text>
+</svg>
+</body></html>
