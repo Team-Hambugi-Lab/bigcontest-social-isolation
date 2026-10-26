@@ -192,8 +192,8 @@ def main(argv: list[str] | None = None) -> None:
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / "risk_feature_dictionary.csv"
-    merged.to_csv(out, index=False, encoding="utf-8")
-    description.to_csv(out_dir / dictionary_path.name, index=False, encoding="utf-8")
+    merged.to_csv(out, index=False, encoding="utf-8-sig")
+    description.to_csv(out_dir / dictionary_path.name, index=False, encoding="utf-8-sig")
     print(f"saved: {out} {merged.shape}")
     for c in conflicts:
         print(f"conflict: {c}")
