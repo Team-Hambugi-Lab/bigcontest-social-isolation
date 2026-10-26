@@ -17,7 +17,7 @@
 - 무응답만으로 티어를 올리지 않도록 4절 신호 표를 고쳤다. 무응답 종류별 처리는 미결정으로 남겼다.
 - 7절 남은 결정 표에 리뷰 코멘트 4·5번 항목과 이슈 본문 규칙 3(`SUPPORT_NEED_PCT`)과의 관계를 더했다.
 
-**매핑 기준 (#18 확정, 2026-10-24).** 커밋 [`84c4d17`](https://github.com/Team-Hambugi-Lab/bigcontest-social-isolation/commit/84c4d17662cfe31db23d9fb17afdb131d6da8f10)과 Drive [`processed`](https://drive.google.com/drive/folders/1ZJSRH3QHwyCUBdIqnYVmvJlQCZgtUHWp)의 [`feature_tag_mapping.csv`](https://drive.google.com/file/d/1cTdXGTgujsyTPuqtLmJnGxo4wVXVPrY8/view)·[`risk_feature_dictionary.csv`](https://drive.google.com/file/d/1q6OgUqoZlpp2R9ua3YR7MRHPaSg8woPe/view)를 기준으로 삼는다. 위험 특징 24개에 후보 연결 44개(태그 14종 사용)다. 이 브랜치에는 `84c4d17`이 아직 합쳐지지 않아 `resource-tags.md`가 없으므로, 태그·매핑 설명은 [커밋 시점 문서](https://github.com/Team-Hambugi-Lab/bigcontest-social-isolation/blob/84c4d17662cfe31db23d9fb17afdb131d6da8f10/docs/agent/resource-tags.md)를 본다. v1.1까지의 범주 단위 매핑 예시(SOLO, REL 등 7개 범주)는 현재 결과가 아니다. 이 문서는 #18의 매핑과 태그 정의를 바꾸지 않는다.
+**매핑 기준 (#18 확정, 2026-10-24).** 커밋 [`84c4d17`](https://github.com/Team-Hambugi-Lab/bigcontest-social-isolation/commit/84c4d17662cfe31db23d9fb17afdb131d6da8f10)과 Drive [`processed`](https://drive.google.com/drive/folders/1ZJSRH3QHwyCUBdIqnYVmvJlQCZgtUHWp)의 [`feature_tag_mapping.csv`](https://drive.google.com/file/d/1cTdXGTgujsyTPuqtLmJnGxo4wVXVPrY8/view)·[`risk_feature_dictionary.csv`](https://drive.google.com/file/d/1q6OgUqoZlpp2R9ua3YR7MRHPaSg8woPe/view)를 기준으로 삼는다. 위험 특징 24개에 후보 연결 44개(태그 14종 사용)다. 태그·매핑 설명은 [`resource-tags.md`](resource-tags.md)를 본다. v1.1까지의 범주 단위 매핑 예시(SOLO, REL 등 7개 범주)는 현재 결과가 아니다. 이 문서는 #18의 매핑과 태그 정의를 바꾸지 않는다.
 
 **v1.2 변경 요약**
 
@@ -40,7 +40,7 @@
 
 - 대회 요구(주제설명자료 1008): 위험 신호 탐지 → 위험 수준 판단 → 원인 분석 → 대응 방안·복지자원 추천 → **우선 지원 대상 지역·계층 도출**. 단위는 "지역 및 인구집단"이다.
 - 팀 결정(10/15 회의): 서비스 대상은 개인이다. 고립 대상은 [위험 특징 사전](https://app.notion.com/p/3fa1fad9262e8001bba3d049587667f8)(SOLO, REL, OUT, MIND, ECON, HOUSE 등)으로 분류한다.
-- **기관은 서비스 태그 16종으로 분류하고, 위험 특징과 태그는 매핑표로 잇는다.** 위험 특징(사람의 상태)과 기관 태그(기관이 제공하는 서비스)를 같은 코드로 쓰지 않는다. 그래서 #17 범주가 바뀌어도 기관 태그는 그대로 두고 매핑표만 고친다. 매핑은 범주가 아니라 세부 특징 코드(`REL_LOW_CONTACT`, `OUT_LONG_DURATION` 등 24개) 단위다. 태그 정의와 매핑은 `resource-tags.md`([`84c4d17` 기준](https://github.com/Team-Hambugi-Lab/bigcontest-social-isolation/blob/84c4d17662cfe31db23d9fb17afdb131d6da8f10/docs/agent/resource-tags.md))에 있다.
+- **기관은 서비스 태그 16종으로 분류하고, 위험 특징과 태그는 매핑표로 잇는다.** 위험 특징(사람의 상태)과 기관 태그(기관이 제공하는 서비스)를 같은 코드로 쓰지 않는다. 그래서 #17 범주가 바뀌어도 기관 태그는 그대로 두고 매핑표만 고친다. 매핑은 범주가 아니라 세부 특징 코드(`REL_LOW_CONTACT`, `OUT_LONG_DURATION` 등 24개) 단위다. 태그 정의와 매핑은 [`resource-tags.md`](resource-tags.md)에 있다.
 - **매핑 결과는 추천 후보다.** 기관 이용 자격이나 확정 추천이 아니다. `NOTE`의 조건, 본인 의사, 기관의 지역·대상·운영 조건을 확인하기 전에는 "적격", "추천 확정"으로 표현하지 않는다 (#18 확정).
 - 위험 지표와 위험 특징 사전 설계는 다른 팀원이 맡는다. 이 문서는 그 결과를 받아 쓰는 서비스 흐름만 다룬다.
 
@@ -347,7 +347,7 @@ v1.3까지 미결정으로 남긴 항목의 기본안이다. 팀이 반대하지
 ## 6. 시연과 한계
 
 - 개인 단위 흐름(0\~5)의 사용자 데이터는 실데이터가 없어 **페르소나 합성 데이터**로 시연한다. 생성 방식 설명자료를 함께 제출한다 (대회 규칙). 시연 줄거리는 [`scenarios.md`](scenarios.md)의 청년·고령 시나리오다.
-- **실데이터로 도는 부분:** 지역 층(대회 제공 데이터)과 4단계 추천에 쓰는 기관·지원사업 DB(공공데이터, `resource-tags.md` [`84c4d17` 기준](https://github.com/Team-Hambugi-Lab/bigcontest-social-isolation/blob/84c4d17662cfe31db23d9fb17afdb131d6da8f10/docs/agent/resource-tags.md)).
+- **실데이터로 도는 부분:** 지역 층(대회 제공 데이터)과 4단계 추천에 쓰는 기관·지원사업 DB(공공데이터, [`resource-tags.md`](resource-tags.md)).
 - **조건 확인은 자동 판정이 아니다.** `NOTE` 조건은 자연어이고 구조화된 판정 로직이 없다. 시연에서도 조건 확인 응답(페르소나 대화)이 있어야 후보를 통과시키며, 응답이 없으면 보류로 보인다.
 - 이동·체류 수집은 동의, 단말 권한, 배터리 문제가 있어 선택 기능으로 둔다. 없어도 체크인만으로 흐름이 돌아가야 한다.
 - **추천 자원 DB의 한계:**
@@ -387,5 +387,4 @@ v1.3까지 미결정으로 남긴 항목의 기본안이다. 팀이 반대하지
 - 분석 팀이 지역 층에 넘길 결과 형식 (입력 계약)
 - 고립 지표 축 확정 후 축 레지스트리 교체 (4-1)
 - 거리순 추천을 위한 지오코딩 여부 (좌표 없는 기관 26.4%, #18 후속 또는 별도 이슈)
-- `84c4d17`(#18) 합류 후 문서 링크를 저장소 안 `resource-tags.md`로 되돌리기
 - 서울시고립예방센터 누리집 수집 자료를 대회 규정상 쓸 수 있는지 확인
