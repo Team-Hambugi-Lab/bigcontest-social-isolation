@@ -1,4 +1,4 @@
-FEATURE_CODE,TAG,PRIORITY,QUESTION,PASS_IF
+﻿FEATURE_CODE,TAG,PRIORITY,QUESTION,PASS_IF
 REL_NO_CONFIDANT,SOCIAL_PART,1,마음 편히 이야기할 사람을 만날 수 있는 모임이나 프로그램에 관심이 있으세요?,관심 있다고 답함
 REL_NO_CONFIDANT,ISOLATION_CARE,2,혼자 지내는 어려움을 전문적으로 도와주는 곳과 상담해 보실 생각이 있으세요?,상담 의사가 있다고 답함
 REL_NO_ADVICE,CASE_MGMT,1,요즘 생활이나 복지 문제로 의논하고 싶은 일이 있으세요?,의논할 생활·복지 문제가 있다고 답함
