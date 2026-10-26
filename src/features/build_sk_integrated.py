@@ -10,6 +10,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.data.paths import RAW_DIR, SK_DIR
+
 KEYS = ["STD_YM", "BLOCK_CD", "X_COORD", "Y_COORD"]
 MONTHS = ["202507", "202508", "202509", "202510", "202511", "202512"]
 
@@ -46,11 +48,7 @@ def build_all(raw_dir: Path, out_dir: Path) -> dict[str, int]:
 
 
 if __name__ == "__main__":
-    repo_root = Path(__file__).resolve().parents[2]
-    raw_dir = repo_root / "data" / "raw" / "csv_변환" / "2026빅콘테스트_sk통신인구_데이터_레이아웃"
-    out_dir = repo_root / "data" / "raw"
-
-    counts = build_all(raw_dir, out_dir)
+    counts = build_all(SK_DIR, RAW_DIR)
     total = sum(counts.values())
     for month, n in counts.items():
         print(f"{month}: {n:,}행")

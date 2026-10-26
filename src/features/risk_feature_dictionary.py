@@ -35,6 +35,77 @@ INDEX_RULES = {
     "other50(주택 이외 거처 비율×50세+ 비율, 고시원 대리) 백분위가 높음",
 }
 
+SENIOR_EMPTY = "보건복지부 문항이 없는 고령·중장년 제안 3개는 비어 있음"
+YOUTH_ONLY = "고령 근거가 없으면 [청년]만 있음"
+# 출력 열 정의서(risk_feature_dictionary_dictionary.csv): (열, 설명, 단위, 결측)
+COLUMN_DESCRIPTIONS = [
+    (
+        "FEATURE_CODE",
+        "위험 특징 코드(범주 REL, OUT, SOLO, BODY, MIND, ECON, HOUSE + 특징 이름). "
+        "10/20 확정 21개와 10/22 채택 고령·중장년 제안 3개",
+        "",
+        "",
+    ),
+    (
+        "FEATURE_NAME",
+        "특징 한글 이름(청년 사전 기준; 고령·중장년 제안 3개는 고령·중장년 작업본 이름)",
+        "",
+        "",
+    ),
+    ("DEFINITION", "특징 한 문장 정의(에이전트가 사용자에게서 지금 감지하는 상태 기준)", "", ""),
+    (
+        "AGE_PATTERN",
+        "연령별 양상. [청년] 보건복지부 2023 고립·은둔 청년 중 해당 비율, "
+        "[고령·중장년] 고령·중장년 검토 의견",
+        "",
+        "",
+    ),
+    (
+        "EVIDENCE_SOURCE",
+        "근거 자료와 문항. [청년] 보건복지부·서울시 실태조사 문항, "
+        "[고령·중장년] 출처 ID(S1-S11, docs/risk-features.md 출처 목록)",
+        "",
+        YOUTH_ONLY,
+    ),
+    (
+        "EVIDENCE_VALUE",
+        "근거 수치 문장. [청년] 은둔·고립 집단 내 해당 비율(비교 집단 없음)과 "
+        "서울시 고립·은둔 대 전체 청년 비율, [고령·중장년] 공식 통계 원 수치"
+        "(같은 특징의 직접 비율이 아닐 수 있음)",
+        "",
+        YOUTH_ONLY,
+    ),
+    ("DETECT_DATA", "감지 데이터: SGIS, SK, 신한카드, 감지 불가(청년 사전 기준)", "", ""),
+    (
+        "DETECT_RULE",
+        "그 데이터로 감지하는 방법. [청년]과 [고령·중장년] 연령대별 문장"
+        "(숫자 기준은 노출 지수·활동 신호에서 정함)",
+        "",
+        YOUTH_ONLY,
+    ),
+    ("IS_CRISIS", "위기 특징 여부(Y/N). 지난 2주 안의 자살·자해 생각과 시도만 Y", "", ""),
+    (
+        "INSTITUTION_TAGS",
+        "특징별 후보 서비스 태그(; 구분, PRIORITY 순). 추천 확정·이용 자격 아님",
+        "",
+        "24개 특징 모두 연결. 결측이면 매핑 오류",
+    ),
+    (
+        "SUPPORT_TYPES",
+        '특징 해당자가 전체 응답자(은둔+고립)보다 "매우 필요함"을 더 많이 고른 '
+        "지원 상위 3개(차이 순, ; 구분). 청년 실태조사 기준",
+        "",
+        SENIOR_EMPTY,
+    ),
+    (
+        "SUPPORT_NEED_PCT",
+        'SUPPORT_TYPES 순서대로 특징 해당자의 "매우 필요함" 비율(; 구분). '
+        "청년 실태조사 기준, 고령은 같은 문항 수치 없음",
+        "%, 0~100",
+        SENIOR_EMPTY,
+    ),
+]
+
 
 def _labeled(youth: str, senior: str | None) -> str:
     """청년·고령 문장을 연령대 표시를 붙여 한 칸에 잇는다."""
@@ -179,21 +250,24 @@ def main(argv: list[str] | None = None) -> None:
     evidence = pd.read_csv(INTERIM_DIR / "risk_features_youth.csv")
     extra = proposed_rows(proposed, evidence)
     merged, conflicts = merge_dictionary(youth, senior, youth_rates(evidence), extra)
-    merged = apply_institution_tags(merged, pd.read_csv(args.mapping_path))
-    dictionary_path = PROCESSED_DIR / "risk_feature_dictionary_dictionary.csv"
-    description = pd.read_csv(dictionary_path)
-    tag_row = description["COLUMN"].eq("INSTITUTION_TAGS")
-    if tag_row.sum() != 1:
-        raise ValueError("위험 특징 열 정의서에 INSTITUTION_TAGS가 정확히 한 번 있어야 함")
-    description.loc[tag_row, "DESCRIPTION"] = (
-        "특징별 후보 서비스 태그(; 구분, PRIORITY 순). 추천 확정·이용 자격 아님"
+    mapping_path = Path(args.mapping_path)
+    if mapping_path.exists():
+        merged = apply_institution_tags(merged, pd.read_csv(mapping_path))
+    else:
+        # 매핑은 이 사전의 FEATURE_CODE·IS_CRISIS로 만든다. 첫 실행은 태그를 비워 두고,
+        # institutions 실행 후 다시 실행해 채운다.
+        merged = merged.assign(INSTITUTION_TAGS=pd.NA)
+        print(f"skip INSTITUTION_TAGS: {mapping_path} 없음. institutions 실행 후 다시 실행")
+    description = pd.DataFrame(
+        COLUMN_DESCRIPTIONS, columns=["COLUMN", "DESCRIPTION", "UNIT", "MISSING"]
     )
-    description.loc[tag_row, "MISSING"] = "24개 특징 모두 연결. 결측이면 매핑 오류"
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / "risk_feature_dictionary.csv"
     merged.to_csv(out, index=False, encoding="utf-8-sig")
-    description.to_csv(out_dir / dictionary_path.name, index=False, encoding="utf-8-sig")
+    description.to_csv(
+        out_dir / "risk_feature_dictionary_dictionary.csv", index=False, encoding="utf-8-sig"
+    )
     print(f"saved: {out} {merged.shape}")
     for c in conflicts:
         print(f"conflict: {c}")
