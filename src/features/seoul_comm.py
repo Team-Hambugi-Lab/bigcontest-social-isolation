@@ -1,6 +1,6 @@
-"""강남 동별 #13 프로토타입 민감도와 서울 통신 보조 지표를 정리한다 (#15).
+"""강남 동별 1차 프로토타입 민감도와 서울 통신 보조 지표를 정리한다.
 
-#25의 v3.3 주 대조 지표는 로컬 결과를 읽기만 한다. 원자료와 결과 CSV는 Git에 넣지 않는다.
+통신 관심집단 검증의 v3.3 주 대조 지표는 로컬 결과를 읽기만 한다. 원자료와 결과 CSV는 Git에 넣지 않는다.
 """
 
 from __future__ import annotations
@@ -53,17 +53,13 @@ N_BOOT = 2000
 SEED = 42
 
 
-def prototype_files(interim_dir: Path = paths.INTERIM_DIR) -> tuple[Path, Path]:
-    folders = [
-        p
-        for p in interim_dir.iterdir()
-        if p.is_dir() and (p / "isolation_index_prototype.csv").is_file()
-    ]
-    if len(folders) != 1:
-        raise FileNotFoundError(
-            f"expected one prototype folder under {interim_dir}, found {len(folders)}"
-        )
-    return folders[0] / "isolation_index_prototype.csv", folders[0] / "isolation_index_no_oldho.csv"
+def prototype_files(folder: Path = paths.PROCESSED_DIR / "isolation_index") -> tuple[Path, Path]:
+    """프로토타입 노트북(261015)이 저장한 두 결과 경로를 반환한다."""
+    files = folder / "isolation_index_prototype.csv", folder / "isolation_index_no_oldho.csv"
+    missing = [p.name for p in files if not p.is_file()]
+    if missing:
+        raise FileNotFoundError(f"{folder}에 {missing}가 없다. 프로토타입 노트북을 먼저 실행한다")
+    return files
 
 
 def load_prototypes() -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -339,12 +335,12 @@ def write_dictionary(table: pd.DataFrame, path: Path) -> None:
         "dong_nm": "서울 통신자료 행정동명",
         "TOT_OA_CD": "SGIS 집계구 코드",
         "primary_reason": "제외 조건 우선순위에 따른 대표 사유",
-        "ratio_pop_all": "#25 전체 관심집단 추정 인원 / 동일 통신자료 인구의 월별 비율 6개월 평균",
-        "ratio_pop_old65": "#25 65세 이상 관심집단 추정 비율",
-        "score_with_oldho": "#13 노후주택 포함 집계구 점수의 일반가구 가중 동 평균",
-        "score_no_oldho": "#13 노후주택 제외 집계구 점수의 일반가구 가중 동 평균",
-        "score_w": "#25 v3.3의 유효 일반가구 가중 동 점수; #13 점수와 척도가 다름",
-        "share_hh_eval": "전체 일반가구 중 #13 평가 집계구에 속한 가구 비중",
+        "ratio_pop_all": "통신 검증 전체 관심집단 추정 인원 / 동일 통신자료 인구의 월별 비율 6개월 평균",
+        "ratio_pop_old65": "통신 검증 65세 이상 관심집단 추정 비율",
+        "score_with_oldho": "1차 프로토타입 노후주택 포함 집계구 점수의 일반가구 가중 동 평균",
+        "score_no_oldho": "1차 프로토타입 노후주택 제외 집계구 점수의 일반가구 가중 동 평균",
+        "score_w": "v3.3의 유효 일반가구 가중 동 점수; 1차 프로토타입 점수와 척도가 다름",
+        "share_hh_eval": "전체 일반가구 중 1차 프로토타입 평가 집계구에 속한 가구 비중",
         "rank_change": "노후주택 제외 순위 - 포함 순위; 양수면 제외 후 순위 하락",
     }
     rows = []
@@ -368,9 +364,9 @@ def write_dictionary(table: pd.DataFrame, path: Path) -> None:
             elif col.startswith("hh_"):
                 desc = "해당 행정동의 일반가구 수; 전체·평가·보류를 구분"
             elif col.startswith("grade5_"):
-                desc = "#13 프로토타입 5등급의 집계구·일반가구 수 또는 평가 가구 비중"
+                desc = "1차 프로토타입 5등급의 집계구·일반가구 수 또는 평가 가구 비중"
             else:
-                desc = "#25 결과 또는 #13 프로토타입의 원본 열; 해당 출처의 사전·보고서 참조"
+                desc = "통신 검증 결과 또는 1차 프로토타입의 원본 열; 해당 출처의 사전·보고서 참조"
         if col.startswith(("ratio_", "coverage_", "share_")) or "_share_" in col:
             unit = "비율(0~1)"
         elif col.startswith("n_oa_") or col.startswith("grade5_oa_"):
@@ -414,7 +410,7 @@ def write_dictionary(table: pd.DataFrame, path: Path) -> None:
 
 
 def save_scatter(table: pd.DataFrame) -> Path:
-    """같은 22개 동의 두 프로토타입 점수와 #25 주 대조 비율을 그린다."""
+    """같은 22개 동의 두 프로토타입 점수와 통신 검증 주 대조 비율을 그린다."""
     import matplotlib.pyplot as plt
 
     fig, axes = plt.subplots(1, 2, figsize=(10, 4), sharex=True, sharey=True)
@@ -426,7 +422,7 @@ def save_scatter(table: pd.DataFrame) -> Path:
         ax.scatter(table["ratio_pop_all"], table[column], color="#17608d", alpha=0.8)
         ax.set(title=title, xlabel="Low outing + communication (estimated share)")
         ax.grid(alpha=0.2)
-    axes[0].set_ylabel("#13 prototype dong score (household weighted)")
+    axes[0].set_ylabel("Prototype dong score (household weighted)")
     fig.tight_layout()
     path = paths.PROJECT_ROOT / "reports/261023_gangnam_prototype_scatter.png"
     fig.savefig(path, dpi=200, bbox_inches="tight")

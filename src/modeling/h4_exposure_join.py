@@ -1,12 +1,12 @@
-"""60대 이상 활동 저하 신호(#16)를 SGIS 노출 지수 v3.3(#24)와 집계구 단위로 결합한다.
+"""60대 이상 활동 저하 신호를 SGIS 노출 지수 v3.3과 집계구 단위로 결합한다.
 
 H4 판정(JUDGEMENT_STATUS, HOLD_REASON, SIGNAL)은 바꾸지 않고 지수 쪽 상태를 따로 붙인다.
 지수 점수가 없는 집계구는 빼지 않고 EXPOSURE_STATUS = held,
-EXPOSURE_HOLD_REASON = no_exposure_score로 남긴다. #24 합의대로 지수 보류 집계구는
+EXPOSURE_HOLD_REASON = no_exposure_score로 남긴다. 지수 보류 집계구는
 H4 신호로만 판단하므로 SIGNAL을 지우지 않는다.
 
 관찰 후보(EXPOSURE_HIGH)는 지수의 watch 열을 그대로 쓴다:
-보류 아님 AND (5등급 OR 테마 A ≥ 80 OR 테마 B ≥ 80) (#24 후속 3번).
+보류 아님 AND (5등급 OR 테마 A ≥ 80 OR 테마 B ≥ 80).
 20·30대 신호는 외부검증에서 반대 방향이라 결합하지 않는다(보고서 4절).
 두 값을 곱하거나 더한 점수는 만들지 않는다. 노출(누가 사나)과 활동(얼마나 움직이나)은
 지역마다 연관 방향이 달라(보고서 7절) 나란히 표시한다.
@@ -230,7 +230,7 @@ def main() -> None:
     parser.add_argument("--index", type=Path, default=INDEX_PATH, help="지수 집계구 CSV")
     args = parser.parse_args()
     index_path = args.index
-    version = index_path.parent.name  # 드라이브 폴더 이름(v3.3)을 버전으로 기록
+    version = index_path.parent.name  # 입력 폴더 이름(v3.3)을 버전으로 기록
     read = {"dtype": {"TOT_OA_CD": str, "ADM_CD": str}, "encoding": "utf-8-sig"}
 
     signal_oa = pd.read_csv(SIGNAL_OA_PATH, dtype={"TOT_OA_CD": str, "ADM_CD": str})

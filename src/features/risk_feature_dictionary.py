@@ -1,13 +1,13 @@
-"""청년(A-1)과 고령·중장년(A-2) 작업본을 합쳐 위험 특징 사전 risk_feature_dictionary.csv를 만든다.
+"""청년 작업본과 고령·중장년 작업본을 합쳐 위험 특징 사전 risk_feature_dictionary.csv를 만든다.
 
-- 행은 청년 사전의 21개 특징 코드와 10/22에 채택한 A-2 제안 코드 3개다.
+- 행은 청년 사전의 21개 특징 코드와 10/22에 채택한 고령·중장년 제안 코드 3개다.
   연령별 차이는 범주를 나누지 않고 AGE_PATTERN에 적는다.
 - 코드·이름·정의·감지 데이터·위기 여부·필요 지원은 10/20에 확정한 청년 사전을 따른다.
   SUPPORT_NEED_PCT가 실태조사 "매우 필요함" 비율이라 고령 쪽(비율 없음)은 넣지 않는다.
 - 근거 출처·수치·감지 방법은 연령대별로 이어 붙인다.
-- 제안 코드의 이름·정의는 A-2 값을 쓰고, 청년 근거는 서울시 집계표에 있는 것만 붙인다.
+- 제안 코드의 이름·정의는 고령·중장년 작업본 값을 쓰고, 청년 근거는 서울시 집계표에 있는 것만 붙인다.
   보건복지부 문항이 없어 SUPPORT_TYPES·SUPPORT_NEED_PCT는 비운다.
-- INSTITUTION_TAGS는 #18의 세부 특징 매핑에서 채운다.
+- INSTITUTION_TAGS는 기관 서비스 태그 매핑에서 채운다.
 """
 
 import argparse
@@ -21,19 +21,90 @@ from src.features import risk_features_youth as rf
 from src.features.institutions import TYPE_RULES
 
 YOUTH_LABEL, SENIOR_LABEL = "청년", "고령·중장년"
-NO_SENIOR = "A-2 근거 없음"
+NO_SENIOR = "근거 자료 없음"
 NO_YOUTH = "청년 실태조사 근거 없음"
-PROPOSED_PATTERN = "A-2 제안 코드(10/22 채택), 고령 근거: {}"
+PROPOSED_PATTERN = "제안 코드(10/22 채택), 고령 근거: {}"
 CONCAT_COLUMNS = ["EVIDENCE_SOURCE", "EVIDENCE_VALUE", "DETECT_RULE"]
-CRISIS_FLAG = {1: "Y", 0: "N"}  # A-2는 IS_CRISIS를 0/1로 적었다
-SOURCE_REF = re.compile(r"S\d+ pp?\.\S+")  # A-2 근거 문장의 "S1 p.14(PDF18)" 같은 출처
-# SGIS 지수 v3.2(#24)에서 이 특징에 쓰는 지표. 고령·중장년 감지 방법 끝에 붙인다.
+CRISIS_FLAG = {1: "Y", 0: "N"}  # 고령·중장년 작업본은 IS_CRISIS를 0/1로 적었다
+SOURCE_REF = re.compile(r"S\d+ pp?\.\S+")  # 고령·중장년 근거 문장의 "S1 p.14(PDF18)" 같은 출처
+# SGIS 지수 v3.2에서 이 특징에 쓰는 지표. 고령·중장년 감지 방법 끝에 붙인다.
 INDEX_RULES = {
-    "SOLO_LIVING": "지역 지수 v3.2(#24): 테마 A solo50(1인가구율×50세+ 비율), 테마 B male_solo"
+    "SOLO_LIVING": "지역 지수 v3.2: 테마 A solo50(1인가구율×50세+ 비율), 테마 B male_solo"
     "(50-64세 남성 비율×1인가구율) 백분위가 높음",
-    "HOUSE_UNSTABLE": "지역 지수 v3.2(#24): 테마 B housv(비주거용 건물 내 주택·20㎡ 이하 비율), "
+    "HOUSE_UNSTABLE": "지역 지수 v3.2: 테마 B housv(비주거용 건물 내 주택·20㎡ 이하 비율), "
     "other50(주택 이외 거처 비율×50세+ 비율, 고시원 대리) 백분위가 높음",
 }
+
+SENIOR_EMPTY = "보건복지부 문항이 없는 고령·중장년 제안 3개는 비어 있음"
+YOUTH_ONLY = "고령 근거가 없으면 [청년]만 있음"
+# 출력 열 정의서(risk_feature_dictionary_dictionary.csv): (열, 설명, 단위, 결측)
+COLUMN_DESCRIPTIONS = [
+    (
+        "FEATURE_CODE",
+        "위험 특징 코드(범주 REL, OUT, SOLO, BODY, MIND, ECON, HOUSE + 특징 이름). "
+        "10/20 확정 21개와 10/22 채택 고령·중장년 제안 3개",
+        "",
+        "",
+    ),
+    (
+        "FEATURE_NAME",
+        "특징 한글 이름(청년 사전 기준; 고령·중장년 제안 3개는 고령·중장년 작업본 이름)",
+        "",
+        "",
+    ),
+    ("DEFINITION", "특징 한 문장 정의(에이전트가 사용자에게서 지금 감지하는 상태 기준)", "", ""),
+    (
+        "AGE_PATTERN",
+        "연령별 양상. [청년] 보건복지부 2023 고립·은둔 청년 중 해당 비율, "
+        "[고령·중장년] 고령·중장년 검토 의견",
+        "",
+        "",
+    ),
+    (
+        "EVIDENCE_SOURCE",
+        "근거 자료와 문항. [청년] 보건복지부·서울시 실태조사 문항, "
+        "[고령·중장년] 출처 ID(S1-S11, docs/risk-features.md 출처 목록)",
+        "",
+        YOUTH_ONLY,
+    ),
+    (
+        "EVIDENCE_VALUE",
+        "근거 수치 문장. [청년] 은둔·고립 집단 내 해당 비율(비교 집단 없음)과 "
+        "서울시 고립·은둔 대 전체 청년 비율, [고령·중장년] 공식 통계 원 수치"
+        "(같은 특징의 직접 비율이 아닐 수 있음)",
+        "",
+        YOUTH_ONLY,
+    ),
+    ("DETECT_DATA", "감지 데이터: SGIS, SK, 신한카드, 감지 불가(청년 사전 기준)", "", ""),
+    (
+        "DETECT_RULE",
+        "그 데이터로 감지하는 방법. [청년]과 [고령·중장년] 연령대별 문장"
+        "(숫자 기준은 노출 지수·활동 신호에서 정함)",
+        "",
+        YOUTH_ONLY,
+    ),
+    ("IS_CRISIS", "위기 특징 여부(Y/N). 지난 2주 안의 자살·자해 생각과 시도만 Y", "", ""),
+    (
+        "INSTITUTION_TAGS",
+        "특징별 후보 서비스 태그(; 구분, PRIORITY 순). 추천 확정·이용 자격 아님",
+        "",
+        "24개 특징 모두 연결. 결측이면 매핑 오류",
+    ),
+    (
+        "SUPPORT_TYPES",
+        '특징 해당자가 전체 응답자(은둔+고립)보다 "매우 필요함"을 더 많이 고른 '
+        "지원 상위 3개(차이 순, ; 구분). 청년 실태조사 기준",
+        "",
+        SENIOR_EMPTY,
+    ),
+    (
+        "SUPPORT_NEED_PCT",
+        'SUPPORT_TYPES 순서대로 특징 해당자의 "매우 필요함" 비율(; 구분). '
+        "청년 실태조사 기준, 고령은 같은 문항 수치 없음",
+        "%, 0~100",
+        SENIOR_EMPTY,
+    ),
+]
 
 
 def _labeled(youth: str, senior: str | None) -> str:
@@ -56,7 +127,7 @@ def youth_rates(evidence: pd.DataFrame) -> pd.Series:
 
 
 def proposed_rows(proposed: pd.DataFrame, evidence: pd.DataFrame) -> pd.DataFrame:
-    """채택한 A-2 제안 코드를 사전 행으로 만든다. 청년 근거는 근거 표에 있으면 붙인다."""
+    """채택한 고령·중장년 제안 코드를 사전 행으로 만든다. 청년 근거는 근거 표에 있으면 붙인다."""
     feats = evidence[evidence["TABLE"] == "RISK_FEATURE"]
     rows = []
     for p in proposed.to_dict("records"):
@@ -179,21 +250,24 @@ def main(argv: list[str] | None = None) -> None:
     evidence = pd.read_csv(INTERIM_DIR / "risk_features_youth.csv")
     extra = proposed_rows(proposed, evidence)
     merged, conflicts = merge_dictionary(youth, senior, youth_rates(evidence), extra)
-    merged = apply_institution_tags(merged, pd.read_csv(args.mapping_path))
-    dictionary_path = PROCESSED_DIR / "risk_feature_dictionary_dictionary.csv"
-    description = pd.read_csv(dictionary_path)
-    tag_row = description["COLUMN"].eq("INSTITUTION_TAGS")
-    if tag_row.sum() != 1:
-        raise ValueError("위험 특징 열 정의서에 INSTITUTION_TAGS가 정확히 한 번 있어야 함")
-    description.loc[tag_row, "DESCRIPTION"] = (
-        "특징별 후보 서비스 태그(; 구분, PRIORITY 순). 추천 확정·이용 자격 아님"
+    mapping_path = Path(args.mapping_path)
+    if mapping_path.exists():
+        merged = apply_institution_tags(merged, pd.read_csv(mapping_path))
+    else:
+        # 매핑은 이 사전의 FEATURE_CODE·IS_CRISIS로 만든다. 첫 실행은 태그를 비워 두고,
+        # institutions 실행 후 다시 실행해 채운다.
+        merged = merged.assign(INSTITUTION_TAGS=pd.NA)
+        print(f"skip INSTITUTION_TAGS: {mapping_path} 없음. institutions 실행 후 다시 실행")
+    description = pd.DataFrame(
+        COLUMN_DESCRIPTIONS, columns=["COLUMN", "DESCRIPTION", "UNIT", "MISSING"]
     )
-    description.loc[tag_row, "MISSING"] = "24개 특징 모두 연결. 결측이면 매핑 오류"
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / "risk_feature_dictionary.csv"
     merged.to_csv(out, index=False, encoding="utf-8-sig")
-    description.to_csv(out_dir / dictionary_path.name, index=False, encoding="utf-8-sig")
+    description.to_csv(
+        out_dir / "risk_feature_dictionary_dictionary.csv", index=False, encoding="utf-8-sig"
+    )
     print(f"saved: {out} {merged.shape}")
     for c in conflicts:
         print(f"conflict: {c}")

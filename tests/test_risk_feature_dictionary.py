@@ -43,7 +43,7 @@ def test_merge_keeps_youth_rows_and_labels_age_groups():
     assert out.columns.tolist() == rd.rf.DICTIONARY_COLUMNS
     assert out.loc[0, "EVIDENCE_VALUE"] == "[청년] yv1 [고령·중장년] sv"
     assert out.loc[0, "AGE_PATTERN"] == "[청년] ra [고령·중장년] sp"
-    assert out.loc[1, "AGE_PATTERN"] == "[청년] rb [고령·중장년] A-2 근거 없음"
+    assert out.loc[1, "AGE_PATTERN"] == "[청년] rb [고령·중장년] 근거 자료 없음"
     assert out.loc[1, "DETECT_RULE"] == "[청년] yr2"
     assert out.loc[0, "FEATURE_NAME"] == "가"
     assert conflicts == ["A_X FEATURE_NAME: 청년 '가' / 고령 '가'' -> 청년 값"]
@@ -90,7 +90,7 @@ def test_proposed_rows_go_after_their_category_and_use_youth_evidence():
         == "[청년] 서울시 2022 (A11) [고령·중장년] S1 p.14(PDF18); S5 p.56~57(PDF6~7)"
     )
     assert a["AGE_PATTERN"].startswith("[청년] 서울시 2022 A11: 고립·은둔 26.8% 대 전체 청년 3.4%")
-    assert b["AGE_PATTERN"].startswith("[청년] 청년 실태조사 근거 없음 [고령·중장년] A-2 제안 코드")
+    assert b["AGE_PATTERN"].startswith("[청년] 청년 실태조사 근거 없음 [고령·중장년] 제안 코드")
     assert b["IS_CRISIS"] == "N" and b["DETECT_DATA"] == "감지 불가"
     assert pd.isna(b["SUPPORT_NEED_PCT"])
 

@@ -1,4 +1,4 @@
-"""복지·공공기관 자원 DB 정리(이슈 #18) 테스트."""
+"""복지·공공기관 자원 DB 정리 테스트."""
 
 import numpy as np
 import pandas as pd

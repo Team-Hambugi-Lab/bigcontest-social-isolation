@@ -96,7 +96,7 @@ def list_raw_files() -> pd.DataFrame:
 def master_files(interim_dir: Path = INTERIM_DIR) -> dict[str, Path]:
     """집계구 마스터·SGIS 값 상태·변수사전 경로를 반환한다.
 
-    팀 드라이브에서 받은 폴더명(`1차 merge`)이 한글이라 NFD로 저장될 수 있어
+    폴더명(`1차 merge`)이 한글이라 NFD로 저장될 수 있어
     폴더명을 리터럴로 쓰지 않고 하위 폴더 전체에서 파일명으로 찾는다.
     """
     found = {}

@@ -1,8 +1,8 @@
-"""복지·공공기관 원본을 에이전트 자원 DB(`institutions.csv`)로 정리한다 (이슈 #18).
+"""복지·공공기관 원본을 에이전트 자원 DB(`institutions.csv`)로 정리한다.
 
 원본은 `data/raw/reference_data/복지기관_수집/`에 다운로드한 파일 그대로 둔다.
 범위는 수도권(서울·경기·인천)과 분석 지역 춘천시다. 태그 정의는
-`docs/agent/resource-tags.md`를 따른다.
+`docs/resource-tags.md`를 따른다.
 """
 
 from __future__ import annotations
@@ -54,7 +54,7 @@ DG = "https://www.data.go.kr/data/{}/fileData.do"
 STD = "https://www.data.go.kr/data/{}/standard.do"
 SEOUL = "https://data.seoul.go.kr/dataList/{}/S/1/datasetView.do"
 
-# 유형 → (태그, 대상). 태그 어휘와 근거는 docs/agent/resource-tags.md
+# 유형 → (태그, 대상). 태그 어휘와 근거는 docs/resource-tags.md
 TYPE_RULES: dict[str, tuple[str, str]] = {
     "자살예방센터": ("CRISIS_LINE;MENTAL_CARE", "ALL"),
     "광역정신건강복지센터": ("CRISIS_LINE;MENTAL_CARE", "ALL"),
@@ -108,7 +108,7 @@ SEOUL_FACILITY_TYPES = {
     "쪽방상담소": "쪽방상담소",
     "노숙인종합지원센터": "노숙인종합지원센터",
 }
-# #17의 세부 특징 → 기관 서비스 후보. NOTE의 조건은 #19 추천 단계에서 확인한다.
+# 위험 특징 → 기관 서비스 후보. NOTE의 조건은 추천 단계에서 확인한다.
 FEATURE_TAG_MAPPING = [
     ("REL_NO_CONFIDANT", "SOCIAL_PART", 1, "정서적 관계를 넓히고 싶을 때 모임·프로그램 후보"),
     ("REL_NO_CONFIDANT", "ISOLATION_CARE", 2, "고립 지원을 원할 때. 현재 서울 기관만 확인됨"),
@@ -1105,7 +1105,7 @@ COLUMN_DEFINITIONS = {
         "ALL, 60+, 65+ (유형 규칙 기준. 무료급식소는 급식대상 문구로 판정)",
     ),
     "SERVICES": ("서비스 설명", "출처의 업무·프로그램·대상 설명 열. 결측 = 출처에 설명 없음"),
-    "TAGS": ("서비스 태그", "; 구분. docs/agent/resource-tags.md의 16개 태그"),
+    "TAGS": ("서비스 태그", "; 구분. docs/resource-tags.md의 16개 태그"),
     "SOURCE": ("출처 데이터셋", "; 구분. 중복 기관은 출처를 모두 남긴다"),
     "SOURCE_URL": ("출처 페이지", "; 구분"),
     "AS_OF": ("기준일", "원본 기준일 열, 없으면 포털 수정일 (YYYY-MM-DD)"),

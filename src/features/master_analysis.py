@@ -1,7 +1,7 @@
-"""집계구 마스터(SK 2025.07~12 + SGIS 2024)를 분석용 피처 테이블로 정리한다 (이슈 #10).
+"""집계구 마스터(SK 2025.07~12 + SGIS 2024)를 분석용 피처 테이블로 정리한다.
 
 마스터 원본은 수정하지 않는다. 열 제외 기준은 10/11 팀 회의 결정(SGIS 113열)과
-이슈 #10 본문(`*_mean` 43열, 팀 확인 전인 SK 품질 89열은 옵션)을 따른다.
+`*_mean` 43열을 쓰고 SK 품질 89열은 옵션으로 둔다.
 """
 
 from __future__ import annotations
@@ -104,7 +104,7 @@ def fill_business_no_record(df: pd.DataFrame, status: pd.DataFrame) -> pd.DataFr
 
     업종별 사업체수를 no_record=0으로 합하면 1,698개 집계구 전부 총사업체수(to_fa_010)와
     일치한다. 그래서 '기록 없음'을 '해당 업종 사업체 없음'으로 본다. 1인가구 등 다른 SGIS
-    열의 no_record는 이런 근거가 없어 결측으로 둔다(이슈 #6: ga_sd_005를 0으로 덮지 않음).
+    열의 no_record는 이런 근거가 없어 결측으로 둔다(ga_sd_005를 0으로 덮지 않음).
     """
     out = df.copy()
     cols = business_count_columns(out.columns)
