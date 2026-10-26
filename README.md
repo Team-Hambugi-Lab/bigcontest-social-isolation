@@ -37,9 +37,10 @@ uv sync --extra dev --extra gis
 
 ```text
 data/raw/
-├── sk_telecom/                 # 제공 SK 유동인구 CSV (flow_{age,time,wkdy}_pop_YYYYMM.csv)
-├── shinhan_card/               # 제공 신한카드 CSV 2개
-└── reference_data/             # 외부 데이터 (아래 표)
+├── 2026빅콘테스트_sk통신인구_데이터_레이아웃/   # 제공 SK 유동인구 원본 (| 구분, 18개)
+├── 2026빅콘테스트_신한카드_데이터_레이아웃/     # 제공 신한카드 원본 (탭 구분 txt, 2개)
+├── 국가데이터처_SGIS 행정구역 통계 및 경계/      # SGIS 행정동 통계·경계 (8·9단계)
+└── reference_data/                              # 외부 데이터 (아래 표)
 ```
 
 폴더별 구성과 파일 크기는 [`data/raw/README.md`](data/raw/README.md), 열 정의와 결합 기준은 [제공·외부 데이터 명세](docs/data-overview.md)를 참고하세요.
@@ -50,6 +51,7 @@ data/raw/
 
 | 단계 | 실행 | 주요 산출물 |
 |---|---|---|
+| 0. 제공 원본 변환 | `uv run python -m src.data.convert_raw` | `data/raw/sk_telecom/`, `data/raw/shinhan_card/` 쉼표 구분 CSV |
 | 1. SK 월별 통합 | `uv run python -m src.features.build_sk_integrated` | `data/raw/sk_통신인구_YYYYMM_통합.csv` 6개 |
 | 2. 집계구 공간 집계 | `notebooks/261005_GIS_skt_census_aggregation.ipynb`를 마지막 월별 통합 셀까지 실행 | `data/processed/sk_통합_집계구/` |
 | 3. SGIS 결합·변수 선택 | `notebooks/261008_GIS_sgis2024_master_merge.ipynb` 전체 실행 ([실행 안내](docs/sgis_master_reproduction.md)) | `data/interim/1차 merge/master_sgis2024.csv` 외 2개, `data/processed/master_sgis2024_selected_no_industry_counts.csv` |
@@ -60,11 +62,12 @@ data/raw/
 | 8. 통신 관심집단 검증 | `uv run python -m src.evaluation.telecom_validation` | `data/interim/gangnam22_v3_validation.csv` 외 |
 | 9. 활동 신호 방향 검증 | `uv run python -m src.evaluation.h4_external_validation` | `data/interim/h4_external_validation.csv` |
 | 10. 강남 동 검증 보완 | `notebooks/261015_GIS_isolation_index_prototype.ipynb` 실행 후 `uv run python -m src.features.seoul_comm` | `data/processed/validation_gangnam_*.csv`, `reports/261023_gangnam_prototype_scatter.png` |
-| 11. 위험 특징 사전 | `uv run python -m src.features.risk_features_youth` → `uv run python -m src.features.risk_feature_dictionary` | `data/interim/risk_features_youth.csv`, `data/processed/risk_feature_dictionary.csv` |
-| 12. 복지자원 DB | `uv run python -m src.features.institutions` (원본 없이 매핑만: `--mapping-only`) | `data/processed/institutions.csv`, `feature_tag_mapping.csv` |
+| 11. 위험 특징 사전 | `uv run python -m src.features.risk_features_youth` → `uv run python -m src.features.risk_feature_dictionary` | `data/interim/risk_features_youth.csv`, `data/processed/risk_feature_dictionary.csv` (기관 태그 열은 빈 채로) |
+| 12. 복지자원 DB | `uv run python -m src.features.institutions` → `uv run python -m src.features.risk_feature_dictionary` 다시 실행 | `data/processed/institutions.csv`, `feature_tag_mapping.csv`, `support_programs.csv`, 기관 태그를 채운 `risk_feature_dictionary.csv` |
 
 - 11단계의 고령·중장년 근거표(`data/interim/risk_features_senior.csv`, `proposed_senior_features.csv`)는 문헌을 직접 읽고 작성한 입력이라 생성 코드가 없습니다. 제출물에 함께 첨부하며, 근거 쪽수는 [위험 특징](docs/risk-features.md)에 있습니다.
-- 12단계의 서울시고립예방센터 원본은 `uv run python scripts/collect_sihsc.py`로 다시 받습니다.
+- 11단계 사전에서 기관 태그를 채우려면 12단계의 매핑이 필요하고, 매핑은 11단계 사전의 특징 코드로 만듭니다. 그래서 사전을 기관 태그 없이 먼저 만들고, 12단계에서 매핑을 만든 뒤 사전을 한 번 더 실행합니다.
+- 12단계는 `data/raw/reference_data/복지기관_수집/`의 원본을 읽습니다. 이미 만든 `institutions.csv`로 매핑만 다시 만들려면 `--mapping-only`를 붙입니다. 서울시고립예방센터 원본은 `uv run python scripts/collect_sihsc.py`로 다시 받습니다.
 - 8·10단계의 부트스트랩 난수는 시드 42로 고정했습니다.
 
 ## 외부 데이터
