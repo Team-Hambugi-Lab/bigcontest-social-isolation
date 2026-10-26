@@ -341,7 +341,7 @@ S2 p.10은 2023년 수급자 1,413명·41.4%를 함께 제시하지만, 1,413/3,
 - **행:** 10/20에 확정한 21개 코드와 10/22에 채택한 고령·중장년 제안 코드 3개, 모두 24행이다. 고령 12개는 모두 21개 코드 안에 있다. 연령별로 다른 점은 범주를 나누지 않고 `AGE_PATTERN`에 적는다.
 - **청년 값을 쓰는 열:** `FEATURE_NAME`, `DEFINITION`, `DETECT_DATA`, `IS_CRISIS`, `SUPPORT_TYPES`, `SUPPORT_NEED_PCT`. 정의는 10/20 확정본이고, `SUPPORT_NEED_PCT`는 실태조사 "매우 필요함" 비율이라 같은 문항이 없는 고령 지원 제안은 넣지 않는다.
 - **연령대별로 잇는 열:** `AGE_PATTERN`, `EVIDENCE_SOURCE`, `EVIDENCE_VALUE`, `DETECT_RULE`. `[청년] … [고령·중장년] …` 형식이고, 고령 근거가 없는 9개는 `AGE_PATTERN`에 "근거 자료 없음"으로 적는다.
-- **비워 둔 열:** `INSTITUTION_TAGS`는 기관 서비스 태그 매핑에서 채운다.
+- **기관 후보 열:** `INSTITUTION_TAGS`는 [기관 서비스 태그 매핑](resource-tags.md)의 44행에서 특징별 `PRIORITY` 순으로 채운다. 후보 태그만으로 기관 이용 자격이나 추천을 확정하지 않는다.
 - **고령·중장년 제안 코드 3개(10/22 채택):** `REL_NO_PRACTICAL_SUPPORT`(아플 때 도와줄 사람 없음), `REL_LOW_CONTACT`(사회적 교류 드묾), `BODY_MOBILITY_LIMIT`(이동·외출 수행 어려움). 사전은 지금 감지하는 특징의 표라 청년 근거가 없어도 코드를 둔다. 이름·정의·감지 방법은 고령·중장년 작업본을 따르고, 같은 범주의 마지막 행 뒤에 넣는다.
   - 청년 근거는 `REL_LOW_CONTACT`에만 있다. 서울시 `A11`(2주 교류 0회, 고립·은둔 26.8% 대 전체 청년 3.4%)은 교류 빈도 문항이라 `REL_NO_CONFIDANT`에서 이 코드로 옮겼다. 나머지 둘은 "청년 실태조사 근거 없음"으로 적는다.
   - 보건복지부 문항이 없어 세 코드의 `SUPPORT_TYPES`·`SUPPORT_NEED_PCT`는 비어 있다.

@@ -101,3 +101,42 @@ def test_index_rule_appends_to_senior_detect_rule(monkeypatch):
     out, _ = rd.merge_dictionary(_youth(), _senior(), RATES, NO_EXTRA)
     assert out.loc[0, "DETECT_RULE"] == "[청년] yr [고령·중장년] sr idx"
     assert out.loc[1, "DETECT_RULE"] == "[청년] yr [고령·중장년] idx2"
+
+
+def test_apply_institution_tags_orders_candidates_and_preserves_other_columns():
+    risk = pd.DataFrame(
+        {
+            "FEATURE_CODE": ["A", "B"],
+            "IS_CRISIS": ["N", "Y"],
+            "DEFINITION": ["관계", "위기"],
+            "INSTITUTION_TAGS": [pd.NA, pd.NA],
+        }
+    )
+    mapping = pd.DataFrame(
+        [
+            ("A", "ISOLATION_CARE", 2, "서울"),
+            ("A", "SOCIAL_PART", 1, "참여"),
+            ("B", "CRISIS_LINE", 1, "이관"),
+        ],
+        columns=["FEATURE_CODE", "TAG", "PRIORITY", "NOTE"],
+    )
+    out = rd.apply_institution_tags(risk, mapping)
+    assert out["INSTITUTION_TAGS"].tolist() == ["SOCIAL_PART;ISOLATION_CARE", "CRISIS_LINE"]
+    assert out["DEFINITION"].tolist() == risk["DEFINITION"].tolist()
+    assert risk["INSTITUTION_TAGS"].isna().all()
+
+
+def test_apply_institution_tags_rejects_invalid_mapping_before_write():
+    risk = pd.DataFrame({"FEATURE_CODE": ["A"], "IS_CRISIS": ["N"]})
+    mapping = pd.DataFrame(
+        [("A", "SOCIAL_PART", 1, "참여")],
+        columns=["FEATURE_CODE", "TAG", "PRIORITY", "NOTE"],
+    )
+    for bad, error in [
+        (mapping.assign(FEATURE_CODE="UNKNOWN"), "코드 불일치"),
+        (mapping.assign(TAG="UNKNOWN"), "미등록 서비스 태그"),
+        (mapping.assign(PRIORITY=2), "우선순위"),
+        (pd.concat([mapping, mapping]), "중복"),
+    ]:
+        with pytest.raises(ValueError, match=error):
+            rd.apply_institution_tags(risk, bad)

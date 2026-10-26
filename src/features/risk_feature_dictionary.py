@@ -10,19 +10,22 @@
 - INSTITUTION_TAGS는 기관 서비스 태그 매핑에서 채운다.
 """
 
+import argparse
 import re
+from pathlib import Path
 
 import pandas as pd
 
 from src.data.paths import INTERIM_DIR, PROCESSED_DIR
 from src.features import risk_features_youth as rf
+from src.features.institutions import TYPE_RULES
 
 YOUTH_LABEL, SENIOR_LABEL = "청년", "고령·중장년"
 NO_SENIOR = "근거 자료 없음"
 NO_YOUTH = "청년 실태조사 근거 없음"
 PROPOSED_PATTERN = "제안 코드(10/22 채택), 고령 근거: {}"
 CONCAT_COLUMNS = ["EVIDENCE_SOURCE", "EVIDENCE_VALUE", "DETECT_RULE"]
-CRISIS_FLAG = {1: "Y", 0: "N"}  # A-2는 IS_CRISIS를 0/1로 적었다
+CRISIS_FLAG = {1: "Y", 0: "N"}  # 고령·중장년 작업본은 IS_CRISIS를 0/1로 적었다
 SOURCE_REF = re.compile(r"S\d+ pp?\.\S+")  # 고령·중장년 근거 문장의 "S1 p.14(PDF18)" 같은 출처
 # SGIS 지수 v3.2에서 이 특징에 쓰는 지표. 고령·중장년 감지 방법 끝에 붙인다.
 INDEX_RULES = {
@@ -129,16 +132,68 @@ def merge_dictionary(
     return merged.reindex(columns=rf.DICTIONARY_COLUMNS).reset_index(drop=True), conflicts
 
 
-def main() -> None:
+def apply_institution_tags(risk: pd.DataFrame, mapping: pd.DataFrame) -> pd.DataFrame:
+    """검증된 긴 형태 매핑에서 특징별 후보 태그 요약을 채운다."""
+    required = {"FEATURE_CODE", "TAG", "PRIORITY", "NOTE"}
+    if not required <= set(mapping.columns):
+        raise ValueError(f"매핑에 필요한 열 누락: {sorted(required - set(mapping.columns))}")
+    if mapping[list(required)].isna().any().any() or not mapping["NOTE"].str.strip().all():
+        raise ValueError("매핑에 빈 코드·태그·우선순위·근거가 있음")
+    if mapping.duplicated(["FEATURE_CODE", "TAG"]).any():
+        raise ValueError("특징·태그 중복 연결")
+    codes = set(risk["FEATURE_CODE"])
+    mapped = set(mapping["FEATURE_CODE"])
+    if (
+        codes != mapped
+        or risk["FEATURE_CODE"].isna().any()
+        or risk["FEATURE_CODE"].duplicated().any()
+    ):
+        raise ValueError(
+            f"매핑 코드 불일치: 누락={sorted(codes - mapped)}, 미등록={sorted(mapped - codes)}"
+        )
+    tags = {tag for value, _ in TYPE_RULES.values() for tag in value.split(";")}
+    if unknown := set(mapping["TAG"]) - tags:
+        raise ValueError(f"미등록 서비스 태그: {sorted(unknown)}")
+    for code, rows in mapping.groupby("FEATURE_CODE"):
+        if sorted(rows["PRIORITY"].tolist()) != list(range(1, len(rows) + 1)):
+            raise ValueError(f"{code}: 잘못된 우선순위")
+    ordered = mapping.sort_values(["FEATURE_CODE", "PRIORITY"])
+    for code in risk.loc[risk["IS_CRISIS"].eq("Y"), "FEATURE_CODE"]:
+        if ordered.loc[ordered["FEATURE_CODE"].eq(code), "TAG"].iloc[0] != "CRISIS_LINE":
+            raise ValueError(f"{code}: 위기 이관 태그가 1순위가 아님")
+    summary = ordered.groupby("FEATURE_CODE", sort=False)["TAG"].agg(";".join)
+    result = risk.copy()
+    result["INSTITUTION_TAGS"] = result["FEATURE_CODE"].map(summary)
+    return result
+
+
+def main(argv: list[str] | None = None) -> None:
     """data/interim/의 두 작업본을 합쳐 data/processed/risk_feature_dictionary.csv로 저장한다."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--mapping-path", default=str(PROCESSED_DIR / "feature_tag_mapping.csv"))
+    parser.add_argument("--out-dir", default=str(PROCESSED_DIR))
+    args = parser.parse_args(argv)
     youth = pd.read_csv(INTERIM_DIR / "risk_feature_dictionary_youth.csv")
     senior = pd.read_csv(INTERIM_DIR / "risk_features_senior.csv", encoding="utf-8-sig")
     proposed = pd.read_csv(INTERIM_DIR / "proposed_senior_features.csv", encoding="utf-8-sig")
     evidence = pd.read_csv(INTERIM_DIR / "risk_features_youth.csv")
     extra = proposed_rows(proposed, evidence)
     merged, conflicts = merge_dictionary(youth, senior, youth_rates(evidence), extra)
-    out = PROCESSED_DIR / "risk_feature_dictionary.csv"
+    merged = apply_institution_tags(merged, pd.read_csv(args.mapping_path))
+    dictionary_path = PROCESSED_DIR / "risk_feature_dictionary_dictionary.csv"
+    description = pd.read_csv(dictionary_path)
+    tag_row = description["COLUMN"].eq("INSTITUTION_TAGS")
+    if tag_row.sum() != 1:
+        raise ValueError("위험 특징 열 정의서에 INSTITUTION_TAGS가 정확히 한 번 있어야 함")
+    description.loc[tag_row, "DESCRIPTION"] = (
+        "특징별 후보 서비스 태그(; 구분, PRIORITY 순). 추천 확정·이용 자격 아님"
+    )
+    description.loc[tag_row, "MISSING"] = "24개 특징 모두 연결. 결측이면 매핑 오류"
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out = out_dir / "risk_feature_dictionary.csv"
     merged.to_csv(out, index=False, encoding="utf-8")
+    description.to_csv(out_dir / dictionary_path.name, index=False, encoding="utf-8")
     print(f"saved: {out} {merged.shape}")
     for c in conflicts:
         print(f"conflict: {c}")
